@@ -10,6 +10,13 @@ class Catalog(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
 
+    name = models.CharField(
+
+        verbose_name='Nome da empresa', max_length=155,
+        null=True, blank=True
+
+    )
+
     photo_img = models.URLField(
         verbose_name='Logotipo da empresa',
         null=True, blank=True
@@ -18,6 +25,22 @@ class Catalog(models.Model):
     banner_img = models.URLField(
         verbose_name='Foto do banner', null=True,
         blank=True
+    )
+
+    minimum_order_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Valor mínimo por pedido"
+    )
+
+    minimum_order_value_free_shipping = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Valor mínimo por pedido para frete grátis"
     )
 
     about = models.TextField(default='Meu catálogo digital ; )')

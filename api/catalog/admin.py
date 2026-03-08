@@ -37,7 +37,7 @@ class CatalogAdmin(admin.ModelAdmin):
         }),
 
         ("Informações", {
-            "fields": ("about", "slug")
+            "fields": ("minimum_order_value", "minimum_order_value_free_shipping","about", "slug")
         }),
 
         ("Datas", {

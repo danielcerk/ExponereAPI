@@ -1,16 +1,21 @@
-# Adicionar Product * ( Com multiplas imagens e multiplas categorias)
-# Adicionar Wishlist * ( router vamos puxar Catalog e User )
-# Adicionar Estoque ( Produto ) *
-# Adicionar Order
-# Adicionar sistema de cupom
-
-# Fazer testes unitários e de integração
+# Editar env gh actions
 # Criar imagem docker
+# Criar docker compose
 
 # Adicionar login com google
-# Adicionar Plugin ( GA4, tag manager e Pixel Facebook, Pagseguro com django-pagseguro para pagamentos dos lojistas, e ERPs )
+# Adicionar Product * ( Adicionar novos serializers e incorporar o stock, category serializer em product, views e urls, tests )
+# Adicionar Wishlist * ( router vamos puxar Catalog e User )
+# Adicionar Estoque ( Completar Serializer e Signals, tests ) *
+# Adicionar Order ( models, admin, signals, views, urls, tests )
+# Adicionar sistema de cupom ( Signals, Views, Urls, testes )
+# Adicionar sistema de frete ( API MelhorEnvio, models, admin, signals, views, urls, testes )
+# Adicionar sistema de SEO ( Signals - para criar automaticamente keywords, views, urls e testes ) *
+
+# Adicionar Plugin ( GA4, tag manager e Pixel Facebook, Pagseguro com django-pagseguro para pagamentos dos lojistas, Gestão de estoque, Sacolinha do Instagram )
 # Adicionar Analytics ( Com dados de orders e de plugins dos analytics )
-# Ver se conseguimos integrar com sacolinha do Instagram e Catlaogo do Whatsapp
+
+# Fazer testes unitários e de integração
+# Adicionar consultas com elastic search
 
 import os
 from pathlib import Path
@@ -59,6 +64,9 @@ INSTALLED_APPS = [
     'api.plugin',
     'api.product',
     'api.wishlist',
+    'api.SEO',
+    'api.shipping',
+    'api.stock',
     'api.subscription',
 
     'rest_framework',

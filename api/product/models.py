@@ -41,6 +41,14 @@ class Product(models.Model):
         
     )
 
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Valor mínimo por pedido para frete grátis"
+    )
+
     is_active = models.BooleanField(
 
         default=True, verbose_name='Está ativo'
@@ -235,6 +243,13 @@ class Image(models.Model):
         default='https://upload.wikimedia.org/wikipedia/commons/a/a3/Image-not-found.png'
     )
 
+    alt_text = models.TextField(
+
+        verbose_name='Texto alternativo',
+        null=True, blank=True
+
+    )
+
     is_main = models.BooleanField(
         verbose_name='Imagem principal',
         default=False,
@@ -271,6 +286,8 @@ class Image(models.Model):
         return f'Imagem #{self.pk}'
 
     def save(self, *args, **kwargs):
+
+        self.alt_text = f'Foto de {self.product.title} da {self.product.catalog.name} localizado(a) em {self.product.catalog.user.address}'
 
         if not self.slug:
 

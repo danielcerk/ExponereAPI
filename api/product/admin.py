@@ -41,6 +41,7 @@ class ProductAdmin(admin.ModelAdmin):
         "title",
         "catalog",
         "slug",
+        "price",
         "is_active",
         "created_at",
         "updated_at",
@@ -132,6 +133,7 @@ class ImageAdmin(admin.ModelAdmin):
 
     list_display = (
         "product",
+        "alt_text",
         "is_main",
         "created_at",
     )

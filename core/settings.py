@@ -1,18 +1,19 @@
 # Editar env gh actions
-# Criar imagem docker
+# Criar imagem docker ( "docker image build -t exponere_api:1.0 ." , )
 # Criar docker compose
 
-# Adicionar login com google
-# Adicionar Product * ( Adicionar novos serializers e incorporar o stock, category serializer em product, views e urls, tests )
-# Adicionar Wishlist * ( router vamos puxar Catalog e User )
-# Adicionar Estoque ( Completar Serializer e Signals, tests ) *
+# Adicionar models para horário de funcionamento ( Catalogo ) *
+# Adicionar recuperação de senha *
+# Adicionar Product ( Adicionar novos serializers e incorporar o stock, category serializer em product, views e urls, tests )
+# Adicionar Estoque ( Completar Serializer e Signals, tests )
 # Adicionar Order ( models, admin, signals, views, urls, tests )
 # Adicionar sistema de cupom ( Signals, Views, Urls, testes )
 # Adicionar sistema de frete ( API MelhorEnvio, models, admin, signals, views, urls, testes )
-# Adicionar sistema de SEO ( Signals - para criar automaticamente keywords, views, urls e testes ) *
+# Adicionar sistema de SEO ( Signals - para criar automaticamente keywords ) *
 
 # Adicionar Plugin ( GA4, tag manager e Pixel Facebook, Pagseguro com django-pagseguro para pagamentos dos lojistas, Gestão de estoque, Sacolinha do Instagram )
 # Adicionar Analytics ( Com dados de orders e de plugins dos analytics )
+# Adicionar ( Serviço para plano PRO ) de dominio personalizado, ou seja, ao invés de /loja, loja.exponere.com.br
 
 # Fazer testes unitários e de integração
 # Adicionar consultas com elastic search
@@ -75,7 +76,14 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
     'corsheaders',
-    'cities_light'
+    'cities_light',
+
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'dj_rest_auth.registration',
+    'allauth.socialaccount.providers.google',
+
 ]
 
 MIDDLEWARE = [
@@ -255,3 +263,50 @@ else:
     STRIPE_SECRET_KEY = os.getenv('STRIPE_PROD_SECRET_KEY')
     STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PROD_PUBLIC_KEY')
     STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_PROD_WEBHOOK_SECRET')
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'suporteconstsoft@gmail.com'
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+AUTHENTICATION_BACKENDS = (
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
+
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_USERNAME_REQUIRED = False 
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_EMAIL_REQUIRED = True
+
+GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID') 
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
+
+if DEBUG:
+
+    GOOGLE_OAUTH_CALLBACK_URL = 'http://localhost:3000/api/v1/auth/google/callback/'
+
+else:
+
+    GOOGLE_OAUTH_CALLBACK_URL = os.getenv('GOOGLE_OAUTH_CALLBACK_URL')
+
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APPS": [
+            {
+                "client_id": GOOGLE_OAUTH_CLIENT_ID,
+                "secret": GOOGLE_OAUTH_CLIENT_SECRET,
+                "key": "",
+            },
+        ],
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+    }
+}

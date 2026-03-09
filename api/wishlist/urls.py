@@ -5,13 +5,12 @@ from rest_framework_nested.routers import NestedDefaultRouter
 from .views import WishlistViewSet
 from api.catalog.views import CatalogViewSet
 
-
 router = DefaultRouter()
-router.register(r"catalogs", CatalogViewSet, basename="catalogs")
+router.register(r"", CatalogViewSet, basename="catalogs")
 
 catalog_router = NestedDefaultRouter(
     router,
-    r"catalogs",
+    r"",
     lookup="catalog",
 )
 

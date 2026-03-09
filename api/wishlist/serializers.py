@@ -53,14 +53,13 @@ class WishlistSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
 
-        user = attrs.get("user")
         session_key = attrs.get("session_key")
 
-        if not user and not session_key:
+        if not session_key:
 
             raise serializers.ValidationError(
 
-                "User or session_key must be provided."
+                "ession_key must be provided."
 
             )
 

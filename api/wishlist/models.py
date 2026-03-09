@@ -5,7 +5,6 @@ from api.product.models import Product
 
 User = settings.AUTH_USER_MODEL
 
-
 class Wishlist(models.Model):
 
 	product = models.ForeignKey(
@@ -45,15 +44,10 @@ class Wishlist(models.Model):
 		verbose_name_plural = "Wishlists"
 		ordering = ["-created_at"]
 		indexes = [
-			models.Index(fields=["user"]),
 			models.Index(fields=["session_key"]),
 			models.Index(fields=["created_at"]),
 		]
 		constraints = [
-			models.UniqueConstraint(
-				fields=["product", "user"],
-				name="unique_product_user_wishlist"
-			),
 			models.UniqueConstraint(
 				fields=["product", "session_key"],
 				name="unique_product_session_wishlist"
@@ -61,8 +55,5 @@ class Wishlist(models.Model):
 		]
 
 	def __str__(self):
-
-		if self.user:
-			return f"{self.user} - {self.product}"
 
 		return f"Session {self.session_key} - {self.product}"

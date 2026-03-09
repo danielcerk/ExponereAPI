@@ -6,6 +6,8 @@ from rest_framework.permissions import (
 
 )
 
+from api.catalog.models import Catalog
+
 from .models import Wishlist
 from .serializers import WishlistSerializer
 
@@ -30,7 +32,20 @@ class IsOwner(BasePermission):
     
 class WishlistViewSet(ModelViewSet):
 
-    permission_classes = [IsOwner,]
-
-    queryset = Wishlist.objects.all()
+    permission_classes = [IsOwner]
     serializer_class = WishlistSerializer
+
+    def get_queryset(self):
+
+        catalog_id = self.kwargs.get("catalog_id")
+
+        session_key = self.request.session.session_key
+
+        if not session_key:
+            self.request.session.create()
+            session_key = self.request.session.session_key
+
+        return Wishlist.objects.filter(
+            session_key=session_key,
+            product__catalog_id=catalog_id
+        )

@@ -24,6 +24,12 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from rest_framework.decorators import api_view, permission_classes
 
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from dj_rest_auth.registration.views import SocialLoginView
+
+import requests
+
 User = get_user_model()
 
 class IsOwnerOrReadOnly(BasePermission):
@@ -96,6 +102,68 @@ class LogoutAPIView(APIView):
         except Exception as e:
 
             return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+class GoogleLogin(SocialLoginView):
+
+    adapter_class = GoogleOAuth2Adapter
+    callback_url = settings.GOOGLE_OAUTH_CALLBACK_URL
+    client_class = OAuth2Client
+
+class GoogleLoginCallback(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        code = request.GET.get("code")
+
+        if code is None:
+
+            return Response({"error": "Código de autenticação não encontrado"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        token_url = "https://oauth2.googleapis.com/token"
+        data = {
+            "code": code,
+            "client_id": settings.GOOGLE_OAUTH_CLIENT_ID,
+            "client_secret": settings.GOOGLE_OAUTH_CLIENT_SECRET,
+            "redirect_uri": settings.GOOGLE_OAUTH_CALLBACK_URL,
+            "grant_type": "authorization_code",
+        }
+
+        response = requests.post(token_url, data=data)
+
+        if response.status_code != 200:
+
+            return Response({"error": "Erro ao obter o token", "content": response.text}, status=status.HTTP_400_BAD_REQUEST)
+
+        token_data = response.json()
+        access_token = token_data.get("access_token")
+
+        user_info_url = "https://www.googleapis.com/oauth2/v2/userinfo"
+        headers = {"Authorization": f"Bearer {access_token}"}
+        user_info_response = requests.get(user_info_url, headers=headers)
+
+        if user_info_response.status_code != 200:
+
+            return Response({"error": "Erro ao obter informações do usuário"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_data = user_info_response.json()
+
+        email = user_data.get("email")
+        name = user_data.get("name")
+
+        # Criar ou autenticar o usuário no banco de dados
+        user, created = User.objects.get_or_create(email=email, defaults={"name": name})
+
+        # Gerar tokens JWT para autenticação
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "user": {
+                "email": user.email,
+                "name": user.name,
+            }
+        })
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])

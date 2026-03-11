@@ -47,5 +47,5 @@ class WishlistViewSet(ModelViewSet):
 
         return Wishlist.objects.filter(
             session_key=session_key,
-            product__catalog_id=catalog_id
+            product__catalog__id=catalog_id
         )

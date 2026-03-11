@@ -1,15 +1,13 @@
-# Editar env gh actions
-# Criar imagem docker ( "docker image build -t exponere_api:1.0 ." , )
-# Criar docker compose
-
-# Adicionar models para horário de funcionamento ( Catalogo ) *
-# Adicionar recuperação de senha *
-# Adicionar Product ( Adicionar novos serializers e incorporar o stock, category serializer em product, views e urls, tests )
-# Adicionar Estoque ( Completar Serializer e Signals, tests )
-# Adicionar Order ( models, admin, signals, views, urls, tests )
-# Adicionar sistema de cupom ( Signals, Views, Urls, testes )
-# Adicionar sistema de frete ( API MelhorEnvio, models, admin, signals, views, urls, testes )
 # Adicionar sistema de SEO ( Signals - para criar automaticamente keywords ) *
+# Adicionar recuperação de senha *
+
+# Criar imagem docker e subir ( "docker image build -t exponere_api:1.0 ." , )
+
+# Adicionar Product ( Adicionar novos serializers e incorporar o stock, category serializer em product, views e urls )
+# Adicionar Estoque ( Completar Serializer e Signals )
+# Adicionar Order ( models, admin, signals, views, urls )
+# Adicionar sistema de cupom ( Signals, Views, Urls )
+# Adicionar sistema de frete ( API MelhorEnvio, models, admin, signals, views, urls )
 
 # Adicionar Plugin ( GA4, tag manager e Pixel Facebook, Pagseguro com django-pagseguro para pagamentos dos lojistas, Gestão de estoque, Sacolinha do Instagram )
 # Adicionar Analytics ( Com dados de orders e de plugins dos analytics )
@@ -64,6 +62,7 @@ INSTALLED_APPS = [
     'api.order',
     'api.plugin',
     'api.product',
+    'api.qrcode',
     'api.wishlist',
     'api.SEO',
     'api.shipping',
@@ -92,6 +91,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'core.middleware.APIKeyMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',

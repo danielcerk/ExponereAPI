@@ -36,14 +36,6 @@ class CategoryViewSet(ModelViewSet):
 
         return Category.objects.filter(
 
-            catalog_id=self.kwargs["catalog_pk"]
+            catalog__id=self.kwargs["catalog_pk"]
 
-        )
-
-    def perform_create(self, serializer):
-
-        serializer.save(
-
-            catalog_id=self.kwargs["catalog_pk"]
-            
         )

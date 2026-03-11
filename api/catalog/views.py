@@ -16,6 +16,7 @@ class IsOwnerOrReadOnly(BasePermission):
     def has_permission(self, request, view):
 
         if request.method in SAFE_METHODS:
+            
             return True
 
         return request.user and request.user.is_authenticated
@@ -39,6 +40,8 @@ class CatalogLinkViewSet(ModelViewSet):
         user = self.request.user
 
         if user.is_authenticated:
+            
             return Catalog.objects.filter(user=user)
 
         return Catalog.objects.none()
+        

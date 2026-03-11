@@ -57,6 +57,63 @@ class Catalog(models.Model):
 
         return f'Catálogo de {self.user.username}'
     
+class OpeningHours(models.Model):
+
+    WEEKDAY_CHOICES = (
+        (0, "Segunda-feira"),
+        (1, "Terça-feira"),
+        (2, "Quarta-feira"),
+        (3, "Quinta-feira"),
+        (4, "Sexta-feira"),
+        (5, "Sábado"),
+        (6, "Domingo"),
+    )
+
+    catalog = models.ForeignKey(
+        "Catalog",
+        on_delete=models.CASCADE,
+        related_name="opening_hours",
+        verbose_name="Catálogo"
+    )
+
+    weekday = models.IntegerField(
+        choices=WEEKDAY_CHOICES,
+        verbose_name="Dia da semana"
+    )
+
+    open_time = models.TimeField(
+        verbose_name="Abre às",
+        null=True,
+        blank=True
+    )
+
+    close_time = models.TimeField(
+        verbose_name="Fecha às",
+        null=True,
+        blank=True
+    )
+
+    is_closed = models.BooleanField(
+        default=False,
+        verbose_name="Fechado neste dia"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+
+        verbose_name = "Horário de funcionamento"
+        verbose_name_plural = "Horários de funcionamento"
+
+        ordering = ["weekday", "open_time"]
+        
+        unique_together = ("catalog", "weekday", "open_time")
+
+    def __str__(self):
+
+        return f"{self.catalog} - {self.get_weekday_display()}"
+    
 class Link(models.Model):
 
     SOCIAL_CHOICES = (

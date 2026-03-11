@@ -43,7 +43,7 @@ class KeyWordSEOViewSet(ModelViewSet):
 
             return Keyword.objects.filter(
                 catalog__user=user,
-                catalog_id=catalog_id
+                catalog__id=catalog_id
             )
 
         return Keyword.objects.none()

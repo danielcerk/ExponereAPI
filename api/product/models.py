@@ -49,6 +49,20 @@ class Product(models.Model):
         verbose_name="Valor mínimo por pedido para frete grátis"
     )
 
+    promotional_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Preço promocional"
+    )
+
+    promotion_is_active = models.BooleanField(
+
+        default=True, verbose_name='Preço promocional está ativo'
+
+    )
+
     is_active = models.BooleanField(
 
         default=True, verbose_name='Está ativo'

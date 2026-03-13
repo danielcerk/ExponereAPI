@@ -6,6 +6,7 @@ from .models import (
     ProductLogisticInfo,
 
 )
+from api.category.serializers import CategorySerializer
 
 from api.cloudinary_utils import upload_to_cloudinary
 
@@ -72,7 +73,7 @@ class ProductSerializer(serializers.ModelSerializer):
         images_files = request.FILES.getlist('images')
 
         for img in images_files:
-            ImageAdvertisement.objects.create(
+            ImageSerializer.objects.create(
                 advertisement=advertisement,
                 image=upload_to_cloudinary(img, 'advertisement_images')
             )
@@ -108,7 +109,7 @@ class ProductSerializer(serializers.ModelSerializer):
         images_files = request.FILES.getlist('images')
 
         for img in images_files:
-            ImageAdvertisement.objects.create(
+            ImageSerializer.objects.create(
                 advertisement=instance,
                 image=upload_to_cloudinary(img, 'advertisement_images')
             )

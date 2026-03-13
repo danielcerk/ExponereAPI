@@ -1,7 +1,13 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Catalog, Link, OpeningHours
+from .models import ( 
+
+    Catalog, 
+    Link, 
+    OpeningHours
+
+)
 
 class LinkInline(admin.TabularInline):
     
@@ -10,14 +16,15 @@ class LinkInline(admin.TabularInline):
     readonly_fields = ("social_name", "created_at", "updated_at")
     fields = ("url", "social_name", "created_at", "updated_at")
 
-
 @admin.register(Catalog)
 class CatalogAdmin(admin.ModelAdmin):
 
     list_display = (
         "user",
+        "name",
         "photo_preview",
         "banner_preview",
+        "business_category",
         "created_at",
         "updated_at",
     )
@@ -37,7 +44,7 @@ class CatalogAdmin(admin.ModelAdmin):
         }),
 
         ("Informações", {
-            "fields": ("minimum_order_value", "minimum_order_value_free_shipping","about", "slug")
+            "fields": ("name", "business_category", "minimum_order_value", "minimum_order_value_free_shipping","about", "slug")
         }),
 
         ("Datas", {

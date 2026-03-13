@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Catalog, Link, OpeningHours
+from .models import  (
+    
+    Catalog, 
+    Link, 
+    OpeningHours
+
+)
 
 from api.cloudinary_utils import ( 
     upload_to_cloudinary, 
@@ -67,10 +73,13 @@ class CatalogSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "name",
+            "category",
+            "category_id",
             "photo_img",
             "banner_img",
             "minimum_order_value",
             "minimum_order_value_free_shipping",
+            "business_category",
             "about",
             "is_active",
             "created_at",

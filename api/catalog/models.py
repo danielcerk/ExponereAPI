@@ -4,6 +4,10 @@ import re
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 
+from django.utils.text import slugify
+
+from api.category.models import BusinessCategory
+
 User = get_user_model()
 
 class Catalog(models.Model):
@@ -14,6 +18,13 @@ class Catalog(models.Model):
 
         verbose_name='Nome da empresa', max_length=155,
         null=True, blank=True
+
+    )
+
+    slug = models.SlugField(
+
+        unique=True, blank=True,
+        null=True, max_length=255
 
     )
 
@@ -43,13 +54,33 @@ class Catalog(models.Model):
         verbose_name="Valor mínimo por pedido para frete grátis"
     )
 
+    business_category = models.ForeignKey(
+
+        BusinessCategory,
+        verbose_name='Categoria da Empresa',
+        null=True, blank=True
+
+    )
+
     about = models.TextField(default='Meu catálogo digital ; )')
-    slug = models.SlugField(max_length=255, unique=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
+
+        if not self.slug and self.name:
+
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+
+            while BusinessCategory.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug
 
         super().save(*args, **kwargs)
 

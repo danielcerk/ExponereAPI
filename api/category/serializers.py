@@ -1,5 +1,24 @@
 from rest_framework import serializers
-from .models import Category
+from .models import Category, BusinessCategory
+
+class BusinessCategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = BusinessCategory
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "created_at",
+            "updated_at",
+        ]
+
+        read_only_fields = [
+            "id",
+            "slug",
+            "created_at",
+            "updated_at",
+        ]
 
 class CategorySerializer(serializers.ModelSerializer):
 

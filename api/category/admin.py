@@ -1,6 +1,58 @@
 from django.contrib import admin
-from .models import Category
+from .models import Category, BusinessCategory
 
+@admin.register(BusinessCategory)
+class BusinessCategoryAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "name",
+        "slug",
+        "created_at",
+        "updated_at",
+    )
+
+    search_fields = (
+        "name",
+        "slug",
+    )
+
+    list_filter = (
+        "created_at",
+        "updated_at",
+    )
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+    )
+
+    prepopulated_fields = {
+        "slug": ("name",)
+    }
+
+    ordering = ("name",)
+
+    fieldsets = (
+        (
+            "Informações da categoria",
+            {
+                "fields": (
+                    "name",
+                    "slug",
+                )
+            },
+        ),
+        (
+            "Datas",
+            {
+                "fields": (
+                    "created_at",
+                    "updated_at",
+                )
+            },
+        ),
+    )
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):

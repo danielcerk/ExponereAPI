@@ -9,9 +9,12 @@ from datetime import date
 
 from api.address.models import Address
 
+from django.utils import timezone
+import uuid
+
 class UserManager(BaseUserManager):
 
-	def create_user(self, username, email=None, first_name=None, last_name=None, password=None):
+	def create_user(self, username, email=None, first_name=None, last_name=None, password=None, terms_of_use_is_ready=False):
 
 		if not email:
 
@@ -19,7 +22,8 @@ class UserManager(BaseUserManager):
 
 		email = self.normalize_email(email)
 		user = self.model(username=username, email=email,
-			first_name=first_name, last_name=last_name,)
+			first_name=first_name, last_name=last_name,
+            terms_of_use_is_ready=terms_of_use_is_ready)
 
 		if password:
 
@@ -30,7 +34,7 @@ class UserManager(BaseUserManager):
 
 		return user
 
-	def create_superuser(self, username, email, password, first_name=None, last_name=None):
+	def create_superuser(self, username, email, password, first_name=None, last_name=None, terms_of_use_is_ready=True):
 
 		user = self.create_user(
             username=username,
@@ -38,6 +42,7 @@ class UserManager(BaseUserManager):
             first_name=first_name,
             last_name=last_name,
             password=password,
+             terms_of_use_is_ready=terms_of_use_is_ready
         )
 		user.is_superuser = True
 		user.is_staff = True
@@ -73,6 +78,11 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
 		max_length=255, 
 		blank=True, null=True, 
 		verbose_name='Nome completo'
+	)
+
+    terms_of_use_is_ready = models.BooleanField(
+		default=False, 
+		verbose_name='Termos de uso foi lido'
 	)
     
     objects = UserManager()
@@ -198,3 +208,67 @@ class Profile(models.Model):
     def __str__(self):
 
         return f'Perfil de {self.user.username} - {self.user.id}'
+    
+class PasswordReset(models.Model):
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="password_resets"
+    )
+
+    email = models.EmailField()
+
+    token = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False
+    )
+
+    is_used = models.BooleanField(
+        default=False
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    expires_at = models.DateTimeField()
+
+    used_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True
+    )
+
+    user_agent = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+
+        indexes = [
+            models.Index(fields=["email"]),
+            models.Index(fields=["token"]),
+        ]
+        ordering = ["-created_at"]
+
+    def is_expired(self):
+
+        return timezone.now() > self.expires_at
+
+    def mark_as_used(self):
+
+        self.is_used = True
+        self.used_at = timezone.now()
+
+        self.save(update_fields=["is_used", "used_at"])
+
+    def __str__(self):
+
+        return f"Password reset for {self.email}"

@@ -15,6 +15,32 @@ from api.address.serializers import AddressSerializer
 
 User = get_user_model()
 
+class ResetPasswordRequestSerializer(serializers.Serializer):
+
+    email = serializers.EmailField(required=True)
+
+class ResetPasswordSerializer(serializers.Serializer):
+
+    new_password = serializers.RegexField(
+        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$',
+        write_only=True,
+        error_messages={
+            "invalid": "Password must be at least 8 characters long with at least one capital letter and one symbol."
+        }
+    )
+
+    confirm_password = serializers.CharField(
+        write_only=True,
+        required=True
+    )
+
+    def validate(self, attrs):
+        if attrs["new_password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError({
+                "confirm_password": "Passwords do not match."
+            })
+        return attrs
+
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     otp = serializers.CharField(required=False, write_only=True)
@@ -77,7 +103,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 
             'first_name', 'last_name', 
-            'email', 'password')
+            'email', 'password', 'terms_of_use_is_ready')
         
         extra_kwargs = {
             'first_name': {'required': False},
@@ -92,6 +118,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
             email=validated_data['email'],
+            terms_of_use_is_ready=validated_data['terms_of_use_is_ready']
         )
         user.set_password(validated_data['password'])
         user.save()

@@ -1,16 +1,19 @@
-# Adicionar sistema de SEO ( Signals - para criar automaticamente keywords ) *
-# Adicionar recuperação de senha *
+# Adicionar suporte a blog ( Conseguir fazer leitura via Strapi ) *
+# Adicionar Product ( Adicionar novos serializers e incorporar o stock, category serializer em product, views e urls )
+# Adicionar Estoque ( Completar Serializer e Signals )
+
+# Adicionar sistema de envio de notification tanto pra email quanto pro sistema ( boas vindas, notificações de segurança, novidades e atualizações, marketing, etc ) django-anymail
+# Adicionar sistema de cupom ( Signals, Views, Urls )
+
+# Adicionar Order ( models, admin, signals, views, urls )
+# Adicionar sistema para nf ( O lojista deverá anexar a nota gerada pra ser enviada pro cliente via email )
+# Adicionar sistema de frete ( Modelos de transportadora que a empresa trabalha, api para cotação de frete e api para rastreio )
 
 # Criar imagem docker e subir ( "docker image build -t exponere_api:1.0 ." , )
 
-# Adicionar Product ( Adicionar novos serializers e incorporar o stock, category serializer em product, views e urls )
-# Adicionar Estoque ( Completar Serializer e Signals )
-# Adicionar Order ( models, admin, signals, views, urls )
-# Adicionar sistema de cupom ( Signals, Views, Urls )
-# Adicionar sistema de frete ( API MelhorEnvio, models, admin, signals, views, urls )
-
 # Adicionar Plugin ( GA4, tag manager e Pixel Facebook, Pagseguro com django-pagseguro para pagamentos dos lojistas, Gestão de estoque, Sacolinha do Instagram )
 # Adicionar Analytics ( Com dados de orders e de plugins dos analytics )
+# Adicionar sistema de backup automatico interno
 # Adicionar ( Serviço para plano PRO ) de dominio personalizado, ou seja, ao invés de /loja, loja.exponere.com.br
 
 # Fazer testes unitários e de integração
@@ -57,8 +60,11 @@ INSTALLED_APPS = [
     'api',
     'api.analytic',
     'api.auth',
+    'api.blog',
     'api.catalog',
     'api.category',
+    'api.nf',
+    'api.notification',
     'api.order',
     'api.plugin',
     'api.product',
@@ -76,6 +82,8 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'corsheaders',
     'cities_light',
+    'anymail',
+    'pagseguro',
 
     'allauth',
     'allauth.account',
@@ -98,12 +106,20 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.ScryptPasswordHasher",
+]
+
 ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -179,7 +195,12 @@ USE_THOUSAND_SEPARATOR = True
 
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -264,12 +285,24 @@ else:
     STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PROD_PUBLIC_KEY')
     STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_PROD_WEBHOOK_SECRET')
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+ANYMAIL = {
+
+    "MAILGUN_API_KEY": "<your Mailgun key>",
+    "MAILGUN_SENDER_DOMAIN": 'mg.example.com', 
+    "IGNORE_RECIPIENT_STATUS": True,
+}
+
+EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+DEFAULT_FROM_EMAIL = "suporteconstsoft@gmail.com"
+SERVER_EMAIL = "suporteconstsoft@gmail.com"
+
+'''
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'suporteconstsoft@gmail.com'
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+'''
 
 AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend',

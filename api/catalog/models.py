@@ -58,7 +58,8 @@ class Catalog(models.Model):
 
         BusinessCategory,
         verbose_name='Categoria da Empresa',
-        null=True, blank=True
+        null=True, blank=True,
+        on_delete=models.SET_NULL
 
     )
 
@@ -75,7 +76,7 @@ class Catalog(models.Model):
             slug = base_slug
             counter = 1
 
-            while BusinessCategory.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+            while Catalog.objects.filter(slug=slug).exclude(pk=self.pk).exists():
 
                 slug = f"{base_slug}-{counter}"
                 counter += 1
@@ -165,7 +166,7 @@ class Link(models.Model):
         related_name='links'
     )
 
-    url = models.URLField("Link da rede social")
+    url = models.URLField("Link da rede social", null=True, blank=True)
 
     social_name = models.CharField(
         max_length=20,

@@ -1,13 +1,12 @@
+# Adicionar sistema para nf ( Serializers ) *
 # Adicionar suporte a blog ( Conseguir fazer leitura via Strapi ) *
+
 # Adicionar Product ( Adicionar novos serializers e incorporar o stock, category serializer em product, views e urls )
-# Adicionar Estoque ( Completar Serializer e Signals )
-
-# Adicionar sistema de envio de notification tanto pra email quanto pro sistema ( boas vindas, notificações de segurança, novidades e atualizações, marketing, etc ) django-anymail
-# Adicionar sistema de cupom ( Signals, Views, Urls )
-
+# Adicionar Estoque ( Models, serializers, views, urls )
 # Adicionar Order ( models, admin, signals, views, urls )
-# Adicionar sistema para nf ( O lojista deverá anexar a nota gerada pra ser enviada pro cliente via email )
 # Adicionar sistema de frete ( Modelos de transportadora que a empresa trabalha, api para cotação de frete e api para rastreio )
+
+# Adicionar sistema de cupom ( Signals, Views, Urls )
 
 # Criar imagem docker e subir ( "docker image build -t exponere_api:1.0 ." , )
 
@@ -17,7 +16,9 @@
 # Adicionar ( Serviço para plano PRO ) de dominio personalizado, ou seja, ao invés de /loja, loja.exponere.com.br
 
 # Fazer testes unitários e de integração
-# Adicionar consultas com elastic search
+
+# Ver se consigo utilizar o cassandra apache
+# Ver se consigo configurar na aws
 
 import os
 from pathlib import Path
@@ -60,19 +61,20 @@ INSTALLED_APPS = [
     'api',
     'api.analytic',
     'api.auth',
-    'api.blog',
+    #'api.blog',
     'api.catalog',
     'api.category',
-    'api.nf',
+    'api.coupon',
+    #'api.nf',
     'api.notification',
-    'api.order',
-    'api.plugin',
+    #'api.order',
+    #'api.plugin',
     'api.product',
     'api.qrcode',
     'api.wishlist',
     'api.SEO',
-    'api.shipping',
-    'api.stock',
+    #'api.shipping',
+    #'api.stock',
     'api.subscription',
 
     'rest_framework',
@@ -159,6 +161,27 @@ else:
         }
     }
 
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    SECURE_REFERRER_POLICY = 'same-origin'
+
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_HTTPONLY = True
+
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SAMESITE = 'Lax'
+
+    CMS_TOOLBAR_ANONYMOUS_ON = False
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -195,11 +218,13 @@ USE_THOUSAND_SEPARATOR = True
 
 USE_TZ = True
 
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_URL = "/static/"
+
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
+    BASE_DIR / "staticfiles"
 ]
+
+STATIC_ROOT = BASE_DIR / "static"
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -287,14 +312,18 @@ else:
 
 ANYMAIL = {
 
-    "MAILGUN_API_KEY": "<your Mailgun key>",
-    "MAILGUN_SENDER_DOMAIN": 'mg.example.com', 
+    "MAILGUN_API_KEY": os.getenv('MAILGUN_API_KEY'),
+    "MAILGUN_SENDER_DOMAIN": os.getenv('MAILGUN_SENDER_DOMAIN'), 
     "IGNORE_RECIPIENT_STATUS": True,
 }
 
 EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
 DEFAULT_FROM_EMAIL = "suporteconstsoft@gmail.com"
 SERVER_EMAIL = "suporteconstsoft@gmail.com"
+
+MAILGUN_WELCOME_EMAIL_TEMPLATE = os.getenv('MAILGUN_WELCOME_EMAIL_TEMPLATE')
+MAILGUN_PASSWORD_RESET_EMAIL_TEMPLATE = os.getenv('MAILFUN_PASSWORD_RESET_EMAIL_TEMPLATE')
+MAILGUN_CONFIRMATION_EMAIL_TEMPLATE = os.getenv('MAILGUN_CONFIRMATION_EMAIL_TEMPLATE')
 
 '''
 EMAIL_HOST = 'smtp.gmail.com'

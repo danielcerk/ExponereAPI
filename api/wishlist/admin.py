@@ -28,7 +28,6 @@ class WishlistAdmin(admin.ModelAdmin):
 
 	search_fields = (
 		"product__name",
-		"user__username",
 		"session_key",
 	)
 
@@ -65,7 +64,7 @@ class WishlistAdmin(admin.ModelAdmin):
 				"updated_at",
 			),
 			"classes": ("collapse",),
-		}),
+		})
 	)
 
 	save_on_top = True
@@ -74,4 +73,4 @@ class WishlistAdmin(admin.ModelAdmin):
 		
 		qs = super().get_queryset(request)
 		
-		return qs.select_related("product", "user")
+		return qs.select_related("product")

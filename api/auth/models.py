@@ -12,6 +12,8 @@ from api.address.models import Address
 from django.utils import timezone
 import uuid
 
+from django.conf import settings
+
 class UserManager(BaseUserManager):
 
 	def create_user(self, username, email=None, first_name=None, last_name=None, password=None, terms_of_use_is_ready=False):

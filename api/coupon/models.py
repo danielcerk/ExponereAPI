@@ -10,20 +10,18 @@ class Coupon(models.Model):
     catalog = models.ForeignKey(
         Catalog,
         on_delete=models.CASCADE,
-        verbose_name="Catálogo",
-        related_name="coupons"
+        related_name="%(class)s_coupons"
     )
 
     name = models.CharField(
         verbose_name="Nome do cupom",
         max_length=25,
-        unique=True
     )
 
     code = models.CharField(
         verbose_name="Código do cupom",
         max_length=30,
-        unique=True
+        db_index=True
     )
 
     is_active = models.BooleanField(
@@ -38,8 +36,8 @@ class Coupon(models.Model):
     )
 
     usage_count = models.PositiveIntegerField(
-        verbose_name="Quantidade utilizada",
-        default=0
+        default=0,
+        editable=False
     )
 
     start_date = models.DateTimeField(
@@ -89,8 +87,13 @@ class Coupon(models.Model):
         return True
 
     class Meta:
-
         abstract = True
+        constraints = [
+            models.UniqueConstraint(
+                fields=["catalog", "code"],
+                name="unique_coupon_code_per_catalog"
+            )
+        ]
 
 
 class CouponProgressive(Coupon):
@@ -124,15 +127,11 @@ class CouponProgressive(Coupon):
 
     def calculate_discount(self, order_total):
 
-        if order_total < self.min_purchase_value:
-
+        if not (self.min_purchase_value <= order_total <= self.max_purchase_value):
+            
             return Decimal("0.00")
 
-        if order_total > self.max_purchase_value:
-
-            return Decimal("0.00")
-
-        return order_total * (self.percent_discount / 100)
+        return order_total * (self.percent_discount / Decimal("100"))
 
 
 class CouponFixedValue(Coupon):
@@ -242,4 +241,4 @@ class CouponFirstBuy(Coupon):
 
             return Decimal("0.00")
 
-        return order_total * (self.percent_discount / 100)
+        return order_total * (self.percent_discount / Decimal("100"))

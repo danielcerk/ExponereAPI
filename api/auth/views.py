@@ -38,6 +38,11 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from .models import PasswordReset 
 import os 
 
+from api.notification.utils import (
+    send_password_reset_email,
+    send_password_changed_email
+)
+
 User = get_user_model()
 
 class IsOwnerOrReadOnly(BasePermission):
@@ -211,26 +216,39 @@ class RequestPasswordReset(generics.GenericAPIView):
     def post(self, request):
 
         serializer = self.serializer_class(data=request.data)
-        email = request.data['email']
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
         user = User.objects.filter(email__iexact=email).first()
 
         if user:
 
             token_generator = PasswordResetTokenGenerator()
-            token = token_generator.make_token(user) 
+            token = token_generator.make_token(user)
+
             reset = PasswordReset(email=email, token=token)
             reset.save()
 
-            reset_url = f"{os.environ['PASSWORD_RESET_BASE_URL']}/{token}"
+            if settings.DEBUG:
 
-            # Sending reset link via email (commented out for clarity)
-            # ... (email sending code)
+                reset_url = f"https://exponere.com.br/{token}"
 
-            return Response({'success': 'We have sent you a link to reset your password'}, status=status.HTTP_200_OK)
-        
-        else:
+            else:
 
-            return Response({"error": "User with credentials not found"}, status=status.HTTP_404_NOT_FOUND)
+                reset_url = f"http://127.0.0.1:8000/{token}"
+
+            send_password_reset_email(user, reset_url)
+
+            return Response(
+                {"success": "We have sent you a link to reset your password"},
+                status=status.HTTP_200_OK
+            )
+
+        return Response(
+            {"error": "User with credentials not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
 
 class ResetPassword(generics.GenericAPIView):
 
@@ -241,32 +259,29 @@ class ResetPassword(generics.GenericAPIView):
 
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         data = serializer.validated_data
-        
-        new_password = data['new_password']
-        confirm_password = data['confirm_password']
-        
+        new_password = data["new_password"]
+        confirm_password = data["confirm_password"]
+
         if new_password != confirm_password:
-
             return Response({"error": "Passwords do not match"}, status=400)
-        
+
         reset_obj = PasswordReset.objects.filter(token=token).first()
-        
+
         if not reset_obj:
-            
-            return Response({'error':'Invalid token'}, status=400)
-        
+            return Response({"error": "Invalid token"}, status=400)
+
         user = User.objects.filter(email=reset_obj.email).first()
-        
-        if user:
 
-            user.set_password(request.data['new_password'])
-            user.save()
-            
-            reset_obj.delete()
-            
-            return Response({'success':'Password updated'})
-        
-        else: 
+        if not user:
+            return Response({"error": "No user found"}, status=404)
 
-            return Response({'error':'No user found'}, status=404)
+        user.set_password(new_password)
+        user.save()
+
+        reset_obj.delete()
+
+        send_password_changed_email(user)
+
+        return Response({"success": "Password updated"}, status=200)

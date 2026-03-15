@@ -1,12 +1,13 @@
 from django.db import models
 
+from api.catalog.models import Catalog
+
 class QRCode(models.Model):
 
-    catalog = models.ForeignKey(
-        "Catalog",
+    catalog = models.OneToOneField(
+        Catalog,
         on_delete=models.CASCADE,
-        related_name="qr_code",
-        verbose_name="Catálogo"
+        related_name="qr_code"
     )
 
     img = models.URLField(

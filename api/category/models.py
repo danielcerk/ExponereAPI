@@ -1,14 +1,11 @@
 from django.db import models
 from django.utils.text import slugify
 
-from api.catalog.models import Catalog
-
 class BusinessCategory(models.Model):
 
     name = models.CharField(
 
         verbose_name='Categoria da Empresa', max_length=155,
-        null=True, blank=True
 
     )
 
@@ -30,7 +27,7 @@ class BusinessCategory(models.Model):
             slug = base_slug
             counter = 1
 
-            while Catalog.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+            while BusinessCategory.objects.filter(slug=slug).exclude(pk=self.pk).exists():
 
                 slug = f"{base_slug}-{counter}"
                 counter += 1
@@ -46,22 +43,19 @@ class BusinessCategory(models.Model):
 class Category(models.Model):
 
     catalog = models.ForeignKey(
-        Catalog,
+        "catalog.Catalog",
         on_delete=models.CASCADE,
-        verbose_name='Catalogo',
+        verbose_name="Catalogo",
     )
 
     name = models.CharField(
         verbose_name="Nome",
         max_length=255,
-        unique=True,
     )
 
     slug = models.SlugField(
         verbose_name="Slug",
         max_length=255,
-        unique=True,
-        blank=True,
     )
 
     is_active = models.BooleanField(
@@ -81,14 +75,18 @@ class Category(models.Model):
     )
 
     class Meta:
-
         verbose_name = "Categoria"
         verbose_name_plural = "Categorias"
         ordering = ["name"]
-        indexes = [
-            models.Index(fields=["name"]),
-            models.Index(fields=["slug"]),
-            models.Index(fields=["is_active"]),
+        constraints = [
+            models.UniqueConstraint(
+                fields=["catalog", "name"],
+                name="unique_category_per_catalog"
+            ),
+            models.UniqueConstraint(
+                fields=["catalog", "slug"],
+                name="unique_category_slug_per_catalog"
+            )
         ]
 
     def save(self, *args, **kwargs):
@@ -96,6 +94,86 @@ class Category(models.Model):
         if not self.slug:
 
             self.slug = slugify(self.name)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+
+        return self.name
+    
+class SubCategory(models.Model):
+
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name="subcategories",
+        verbose_name="Categoria",
+    )
+
+
+    name = models.CharField(
+        verbose_name="Nome",
+        max_length=255,
+    )
+
+    slug = models.SlugField(
+        verbose_name="Slug",
+        max_length=255,
+    )
+
+    is_active = models.BooleanField(
+        verbose_name="Ativa",
+        default=True,
+    )
+
+    created_at = models.DateTimeField(
+        verbose_name="Criado em",
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        verbose_name="Atualizado em",
+        auto_now=True,
+    )
+
+    class Meta:
+
+        verbose_name = "SubCategoria"
+        verbose_name_plural = "SubCategorias"
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["name"]),
+            models.Index(fields=["slug"]),
+            models.Index(fields=["is_active"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["category", "name"],
+                name="unique_subcategory_per_category"
+            ),
+            models.UniqueConstraint(
+                fields=["category", "slug"],
+                name="unique_slug_per_subcategory"
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+
+        if not self.slug:
+
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+
+            while SubCategory.objects.filter(
+                category=self.category,
+                slug=slug
+            ).exclude(pk=self.pk).exists():
+
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug
 
         super().save(*args, **kwargs)
 

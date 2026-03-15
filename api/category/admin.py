@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import Category, BusinessCategory
+from .models import ( 
+    Category, 
+    BusinessCategory,
+    SubCategory
+)
 
 @admin.register(BusinessCategory)
 class BusinessCategoryAdmin(admin.ModelAdmin):
@@ -130,3 +134,80 @@ class CategoryAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         
         return qs.select_related("catalog")
+    
+@admin.register(SubCategory)
+class SubCategoryAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "name",
+        "category",
+        "is_active",
+        "created_at",
+        "updated_at",
+    )
+
+    list_display_links = (
+        "id",
+        "name",
+    )
+
+    list_filter = (
+        "is_active",
+        "created_at",
+        "updated_at",
+        "category",
+    )
+
+    search_fields = (
+        "name",
+        "slug",
+        "category__name",
+    )
+
+    ordering = (
+        "name",
+    )
+
+    date_hierarchy = "created_at"
+
+    list_per_page = 25
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+    )
+
+    autocomplete_fields = (
+        "category",
+    )
+
+    prepopulated_fields = {
+        "slug": ("name",)
+    }
+
+    fieldsets = (
+        ("Informações", {
+            "fields": (
+                "category",
+                "name",
+                "slug",
+                "is_active",
+            ),
+        }),
+        ("Datas", {
+            "fields": (
+                "created_at",
+                "updated_at",
+            ),
+            "classes": ("collapse",),
+        }),
+    )
+
+    save_on_top = True
+
+    def get_queryset(self, request):
+
+        qs = super().get_queryset(request)
+
+        return qs.select_related("category")

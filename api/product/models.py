@@ -35,7 +35,6 @@ class Product(models.Model):
 
     category = models.ManyToManyField(
         Category,
-        through='ProductCategory',
         verbose_name='Categorias',
         blank=True
         
@@ -215,7 +214,7 @@ class ProductLogisticInfo(models.Model):
 
     def __str__(self):
 
-        return f"Logística de {self.product.name}"
+        return f"Logística de {self.product.title}"
 
     @property
     def calculated_volume(self):
@@ -284,7 +283,7 @@ class Image(models.Model):
 
         verbose_name = 'Imagem de Anúncio'
         verbose_name_plural = 'Imagens de Anúncios'
-        ordering = ['order', '-created_at']
+        ordering = ['-created_at']
         indexes = [
             models.Index(fields=['product']),
             models.Index(fields=['is_main']),
@@ -293,19 +292,10 @@ class Image(models.Model):
 
     def __str__(self):
 
-        if self.title:
-
-            return self.title
-        
         return f'Imagem #{self.pk}'
 
     def save(self, *args, **kwargs):
 
         self.alt_text = f'Foto de {self.product.title} da {self.product.catalog.name} localizado(a) em {self.product.catalog.user.address}'
-
-        if not self.slug:
-
-            base_slug = slugify(self.title) if self.title else f'image-{self.pk or ""}'
-            self.slug = base_slug
 
         super().save(*args, **kwargs)

@@ -1,25 +1,3 @@
-# Adicionar sistema para nf ( Serializers ) *
-# Adicionar suporte a blog ( Conseguir fazer leitura via Strapi ) *
-
-# Adicionar Product ( Adicionar novos serializers e incorporar o stock, category serializer em product, views e urls )
-# Adicionar Estoque ( Models, serializers, views, urls )
-# Adicionar Order ( models, admin, signals, views, urls )
-# Adicionar sistema de frete ( Modelos de transportadora que a empresa trabalha, api para cotação de frete e api para rastreio )
-
-# Adicionar sistema de cupom ( Signals, Views, Urls )
-
-# Criar imagem docker e subir ( "docker image build -t exponere_api:1.0 ." , )
-
-# Adicionar Plugin ( GA4, tag manager e Pixel Facebook, Pagseguro com django-pagseguro para pagamentos dos lojistas, Gestão de estoque, Sacolinha do Instagram )
-# Adicionar Analytics ( Com dados de orders e de plugins dos analytics )
-# Adicionar sistema de backup automatico interno
-# Adicionar ( Serviço para plano PRO ) de dominio personalizado, ou seja, ao invés de /loja, loja.exponere.com.br
-
-# Fazer testes unitários e de integração
-
-# Ver se consigo utilizar o cassandra apache
-# Ver se consigo configurar na aws
-
 import os
 from pathlib import Path
 
@@ -59,6 +37,8 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_static',
 
     'api',
+    'api.address',
+    'api.affiliate',
     'api.analytic',
     'api.auth',
     #'api.blog',
@@ -74,6 +54,7 @@ INSTALLED_APPS = [
     'api.wishlist',
     'api.SEO',
     #'api.shipping',
+    'api.status',
     #'api.stock',
     'api.subscription',
 
@@ -372,3 +353,8 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     }
 }
+
+# Análise de dados do Google Analytics
+
+GA4_CREDENTIALS = os.getenv('GA4_CREDENTIALS')
+PROPERTY_ID_GA4 = os.getenv('PROPERTY_ID_GA4')

@@ -9,6 +9,7 @@ urlpatterns = [
     path('catalogs/', include('api.wishlist.urls')),
     path('catalogs/', include('api.qrcode.urls')),
     path('catalogs/', include('api.SEO.urls')),
+    path('status/', include('api.status.urls')),
     path('panel/subscription/', include('api.subscription.urls')),
 
 ]

@@ -8,7 +8,7 @@ from .models import Catalog
 @receiver(post_save, sender=UserProfile)
 def create_catalog_user(sender, instance, created, **kwargs):
     
-    if created:
+    if created and instance.is_affiliate == False:
 
         Catalog.objects.create(
             user=instance,

@@ -16,7 +16,11 @@ from django.conf import settings
 
 class UserManager(BaseUserManager):
 
-	def create_user(self, username, email=None, first_name=None, last_name=None, password=None, terms_of_use_is_ready=False):
+	def create_user(
+               self, 
+               username, email=None, first_name=None, 
+               last_name=None, password=None, 
+               terms_of_use_is_ready=False, is_affiliate=False):
 
 		if not email:
 
@@ -25,7 +29,8 @@ class UserManager(BaseUserManager):
 		email = self.normalize_email(email)
 		user = self.model(username=username, email=email,
 			first_name=first_name, last_name=last_name,
-            terms_of_use_is_ready=terms_of_use_is_ready)
+            terms_of_use_is_ready=terms_of_use_is_ready,
+            is_affiliate=is_affiliate)
 
 		if password:
 
@@ -36,7 +41,7 @@ class UserManager(BaseUserManager):
 
 		return user
 
-	def create_superuser(self, username, email, password, first_name=None, last_name=None, terms_of_use_is_ready=True):
+	def create_superuser(self, username, email, password, first_name=None, last_name=None, terms_of_use_is_ready=True, is_affiliate=False):
 
 		user = self.create_user(
             username=username,
@@ -44,7 +49,8 @@ class UserManager(BaseUserManager):
             first_name=first_name,
             last_name=last_name,
             password=password,
-             terms_of_use_is_ready=terms_of_use_is_ready
+            terms_of_use_is_ready=terms_of_use_is_ready,
+            is_affiliate=is_affiliate
         )
 		user.is_superuser = True
 		user.is_staff = True
@@ -80,6 +86,11 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
 		max_length=255, 
 		blank=True, null=True, 
 		verbose_name='Nome completo'
+	)
+
+    is_affiliate = models.BooleanField(
+		default=False, 
+		verbose_name='É afiliado'
 	)
 
     terms_of_use_is_ready = models.BooleanField(

@@ -35,10 +35,15 @@ class ResetPasswordSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
+
         if attrs["new_password"] != attrs["confirm_password"]:
+
             raise serializers.ValidationError({
+
                 "confirm_password": "Passwords do not match."
+
             })
+        
         return attrs
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -103,7 +108,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 
             'first_name', 'last_name', 
-            'email', 'password', 'terms_of_use_is_ready')
+            'email', 'password', 'terms_of_use_is_ready', 'is_affiliate')
         
         extra_kwargs = {
             'first_name': {'required': False},
@@ -118,7 +123,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
             email=validated_data['email'],
-            terms_of_use_is_ready=validated_data['terms_of_use_is_ready']
+            terms_of_use_is_ready=validated_data['terms_of_use_is_ready'],
+            is_affiliate=validated_data['is_affiliate']
         )
         user.set_password(validated_data['password'])
         user.save()

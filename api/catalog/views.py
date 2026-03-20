@@ -28,7 +28,7 @@ class IsOwnerOrReadOnly(BasePermission):
 
         return obj.user == request.user
     
-class CatalogLinkViewSet(ModelViewSet):
+class CatalogViewSet(ModelViewSet):
 
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [IsOwnerOrReadOnly]

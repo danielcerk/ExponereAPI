@@ -94,40 +94,76 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
 
     email = serializers.EmailField(
-        required=True, validators=[
-            UniqueValidator(queryset=User.objects.all())
-        ]
+        required=True,
+        validators=[UniqueValidator(queryset=User.objects.all())]
     )
 
-    password = serializers.CharField(
-        write_only=True, required=True, 
+    password = serializers.CharField(write_only=True, required=True)
+
+    role = serializers.ChoiceField(
+        choices=User.ROLE_CHOICES,
+        default="reader",
+        required=False
     )
 
     class Meta:
-
-        model = User
-        fields = ('username', 
-            'first_name', 'last_name', 
-            'email', 'password', 'terms_of_use_is_ready', 'is_affiliate')
         
+        model = User
+        fields = (
+            'username',
+            'first_name',
+            'last_name',
+            'email',
+            'password',
+            'terms_of_use_is_ready',
+            'is_affiliate',
+            'role',
+        )
+
         extra_kwargs = {
             'first_name': {'required': False},
             'last_name': {'required': False},
         }
 
-
     def create(self, validated_data):
 
-        user = User.objects.create(
-            username=validated_data['username'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
-            email=validated_data['email'],
-            terms_of_use_is_ready=validated_data['terms_of_use_is_ready'],
-            is_affiliate=validated_data['is_affiliate']
-        )
-        user.set_password(validated_data['password'])
-        user.save()
+        request = self.context.get("request")
+        current_user = request.user if request else None
+
+        role = validated_data.pop("role", "reader")
+
+        if current_user and current_user.is_authenticated:
+
+            if current_user.role != "admin":
+
+                raise serializers.ValidationError("Sem permissão para criar usuários.")
+
+            user = User.objects.create_user(
+                username=validated_data['username'],
+                email=validated_data['email'],
+                first_name=validated_data.get('first_name'),
+                last_name=validated_data.get('last_name'),
+                password=validated_data['password'],
+                terms_of_use_is_ready=validated_data.get('terms_of_use_is_ready', False),
+                is_affiliate=validated_data.get('is_affiliate', False),
+                owner=current_user.owner or current_user,
+                role=role,
+                catalog=current_user.catalog,
+            )
+
+        else:
+
+            user = User.objects.create_user(
+                username=validated_data['username'],
+                email=validated_data['email'],
+                first_name=validated_data.get('first_name'),
+                last_name=validated_data.get('last_name'),
+                password=validated_data['password'],
+                terms_of_use_is_ready=validated_data.get('terms_of_use_is_ready', False),
+                is_affiliate=validated_data.get('is_affiliate', False),
+
+                role="admin",
+            )
 
         return user
     

@@ -8,7 +8,7 @@ User = get_user_model()
 
 MAILGUN_WELCOME_EMAIL_TEMPLATE = settings.MAILGUN_WELCOME_EMAIL_TEMPLATE
 
-@receiver(post_save, sender=User)
+'''@receiver(post_save, sender=User)
 def send_welcome_email(sender, instance, created, **kwargs):
 
     if not created:
@@ -21,10 +21,12 @@ def send_welcome_email(sender, instance, created, **kwargs):
         to=[instance.email],
     )
 
-    message.extra_headers = {
-        "X-Mailgun-Variables": '{"name": "%s"}' % instance.username
+    message.template_id = MAILGUN_WELCOME_EMAIL_TEMPLATE
+    message.merge_global_data = {
+        "name": instance.username
     }
 
-    message.template_id = MAILGUN_WELCOME_EMAIL_TEMPLATE
-
-    message.send()
+    try:
+        message.send()
+    except Exception as e:
+        print("Erro ao enviar email:", e)'''

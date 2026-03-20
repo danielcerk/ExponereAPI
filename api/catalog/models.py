@@ -12,7 +12,7 @@ User = get_user_model()
 
 class Catalog(models.Model):
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=False, related_name="owned_catalogs")
 
     name = models.CharField(
 

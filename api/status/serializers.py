@@ -22,10 +22,12 @@ User = get_user_model()
 credentials_info = settings.GA4_CREDENTIALS
 PROPERTY_ID_GA4 = settings.PROPERTY_ID_GA4
 
+if isinstance(credentials_info, str):
+    
+    credentials_info = json.loads(credentials_info)
+
 credentials = service_account.Credentials.from_service_account_info(
-
     credentials_info
-
 )
 
 client = BetaAnalyticsDataClient(credentials=credentials)

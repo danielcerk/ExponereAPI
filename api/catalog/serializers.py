@@ -42,9 +42,7 @@ class LinkSerializer(serializers.ModelSerializer):
             "id",
             "catalog",
             "url",
-            "slug",
             "social_name",
-            "is_active",
             "created_at",
             "updated_at",
         ]
@@ -57,7 +55,6 @@ class LinkSerializer(serializers.ModelSerializer):
         ]
 
         extra_kwargs = {
-            "slug": {"required": False},
             "social_name": {"required": False},
         }
 
@@ -73,15 +70,12 @@ class CatalogSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "name",
-            "category",
-            "category_id",
             "photo_img",
             "banner_img",
             "minimum_order_value",
             "minimum_order_value_free_shipping",
             "business_category",
             "about",
-            "is_active",
             "created_at",
             "updated_at",
             "link",

@@ -56,7 +56,7 @@ INSTALLED_APPS = [
     #'api.shipping',
     'api.status',
     #'api.stock',
-    'api.subscription',
+    #'api.subscription',
 
     'rest_framework',
     'rest_framework.authtoken',
@@ -292,37 +292,31 @@ else:
     STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_PROD_WEBHOOK_SECRET')
 
 ANYMAIL = {
-
     "MAILGUN_API_KEY": os.getenv('MAILGUN_API_KEY'),
-    "MAILGUN_SENDER_DOMAIN": os.getenv('MAILGUN_SENDER_DOMAIN'), 
-    "IGNORE_RECIPIENT_STATUS": True,
+    "MAILGUN_SENDER_DOMAIN": os.getenv('MAILGUN_SENDER_DOMAIN'),
+    "MAILGUN_API_URL": "https://api.mailgun.net/v3",
 }
 
 EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
-DEFAULT_FROM_EMAIL = "suporteconstsoft@gmail.com"
-SERVER_EMAIL = "suporteconstsoft@gmail.com"
+DEFAULT_FROM_EMAIL = "postmaster@mg.marketilize.com.br"
+SERVER_EMAIL = "postmaster@mg.marketilize.com.br"
 
 MAILGUN_WELCOME_EMAIL_TEMPLATE = os.getenv('MAILGUN_WELCOME_EMAIL_TEMPLATE')
 MAILGUN_PASSWORD_RESET_EMAIL_TEMPLATE = os.getenv('MAILFUN_PASSWORD_RESET_EMAIL_TEMPLATE')
 MAILGUN_CONFIRMATION_EMAIL_TEMPLATE = os.getenv('MAILGUN_CONFIRMATION_EMAIL_TEMPLATE')
 
-'''
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'suporteconstsoft@gmail.com'
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-'''
 
-AUTHENTICATION_BACKENDS = (
-    'allauth.account.auth_backends.AuthenticationBackend',
-)
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
 
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_USERNAME_REQUIRED = False 
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_UNIQUE_EMAIL = True
 
 GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID') 
 GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')

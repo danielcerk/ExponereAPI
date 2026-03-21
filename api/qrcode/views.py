@@ -9,6 +9,8 @@ from rest_framework.permissions import (
 from .models import QRCode
 from .serializers import QRCodeSerializer
 
+from api.catalog.models import Catalog
+
 class IsOwnerOrReadOnly(BasePermission):
 
     def has_permission(self, request, view):
@@ -16,7 +18,15 @@ class IsOwnerOrReadOnly(BasePermission):
         if request.method in SAFE_METHODS:
             return True
 
-        return request.user and request.user.is_authenticated
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        catalog_id = view.kwargs.get("catalog_id")
+
+        return Catalog.objects.filter(
+            id=catalog_id,
+            user=request.user
+        ).exists()
 
     def has_object_permission(self, request, view, obj):
 

@@ -4,7 +4,6 @@ from decimal import Decimal
 
 from api.catalog.models import Catalog
 
-
 class Coupon(models.Model):
 
     catalog = models.ForeignKey(

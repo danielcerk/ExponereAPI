@@ -1,1 +1,116 @@
-from rest_framework.serializers import ModelSerializer
+from rest_framework import serializers
+from django.utils import timezone
+
+from .models import (
+    CouponProgressive,
+    CouponFixedValue,
+    CouponPercentValue,
+    CouponFirstBuy
+)
+
+class BaseCouponSerializer(serializers.ModelSerializer):
+
+    is_valid_coupon = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        fields = [
+            "id",
+            "catalog",
+            "name",
+            "code",
+            "is_active",
+            "usage_limit",
+            "usage_count",
+            "start_date",
+            "end_date",
+            "created_at",
+            "updated_at",
+            "is_valid_coupon",
+        ]
+        read_only_fields = ("usage_count", "created_at", "updated_at")
+
+    def get_is_valid_coupon(self, obj):
+        return obj.is_valid()
+
+    def validate(self, data):
+        start_date = data.get("start_date")
+        end_date = data.get("end_date")
+
+        if start_date and end_date and start_date > end_date:
+            raise serializers.ValidationError(
+                "A data de início não pode ser maior que a data de expiração."
+            )
+
+        return data
+
+
+class CouponProgressiveSerializer(BaseCouponSerializer):
+
+    class Meta(BaseCouponSerializer.Meta):
+
+        model = CouponProgressive
+        fields = BaseCouponSerializer.Meta.fields + [
+            "min_purchase_value",
+            "max_purchase_value",
+            "percent_discount",
+        ]
+
+    def validate(self, data):
+        
+        data = super().validate(data)
+
+        min_val = data.get("min_purchase_value")
+        max_val = data.get("max_purchase_value")
+
+        if min_val and max_val and min_val > max_val:
+            raise serializers.ValidationError(
+                "O valor mínimo não pode ser maior que o valor máximo."
+            )
+
+        return data
+
+
+class CouponFixedValueSerializer(BaseCouponSerializer):
+
+    class Meta(BaseCouponSerializer.Meta):
+
+        model = CouponFixedValue
+        fields = BaseCouponSerializer.Meta.fields + [
+            "discount_value",
+            "min_purchase_value",
+        ]
+
+class CouponPercentValueSerializer(BaseCouponSerializer):
+
+    class Meta(BaseCouponSerializer.Meta):
+        model = CouponPercentValue
+        fields = BaseCouponSerializer.Meta.fields + [
+            "percent_discount",
+            "min_purchase_value",
+            "max_discount_value",
+        ]
+
+    def validate(self, data):
+
+        data = super().validate(data)
+
+        percent = data.get("percent_discount")
+
+        if percent and percent > 100:
+
+            raise serializers.ValidationError(
+                "O percentual não pode ser maior que 100%."
+            )
+
+        return data
+
+
+class CouponFirstBuySerializer(BaseCouponSerializer):
+
+    class Meta(BaseCouponSerializer.Meta):
+
+        model = CouponFirstBuy
+        fields = BaseCouponSerializer.Meta.fields + [
+            "percent_discount",
+            "min_purchase_value",
+        ]

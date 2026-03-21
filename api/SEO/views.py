@@ -16,18 +16,26 @@ from rest_framework.parsers import MultiPartParser, FormParser
 class IsOwnerOrReadOnly(BasePermission):
 
     def has_permission(self, request, view):
-
+        
         if request.method in SAFE_METHODS:
             return True
 
-        return request.user and request.user.is_authenticated
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        catalog_id = view.kwargs.get("catalog_id")
+
+        return Catalog.objects.filter(
+            id=catalog_id,
+            user=request.user
+        ).exists()
 
     def has_object_permission(self, request, view, obj):
 
         if request.method in SAFE_METHODS:
             return True
 
-        return obj.user == request.user
+        return obj.catalog.user == request.user
     
 class KeyWordSEOViewSet(ModelViewSet):
 

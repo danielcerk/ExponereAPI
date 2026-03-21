@@ -5,6 +5,7 @@ urlpatterns = [
     path('auth/', include('api.auth.urls')),
     path('catalogs/', include('api.catalog.urls')),
     path('catalogs/', include('api.category.urls')),
+    path('catalogs/', include('api.customer.urls')),
     #path('catalogs/', include('api.product.urls')),
     path('catalogs/', include('api.wishlist.urls')),
     path('catalogs/', include('api.qrcode.urls')),

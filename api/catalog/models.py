@@ -74,12 +74,10 @@ class Catalog(models.Model):
 
             base_slug = slugify(self.name)
             slug = base_slug
-            counter = 1
 
             while Catalog.objects.filter(slug=slug).exclude(pk=self.pk).exists():
 
-                slug = f"{base_slug}-{counter}"
-                counter += 1
+                slug = f"{base_slug}-{slugify(self.user.address)}"
 
             self.slug = slug
 

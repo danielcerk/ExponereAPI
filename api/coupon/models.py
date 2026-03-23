@@ -84,9 +84,12 @@ class Coupon(models.Model):
             return False
 
         return True
+    
+    def calculate_discount(self, order_total):
+
+        return Decimal("0.00")
 
     class Meta:
-        abstract = True
         constraints = [
             models.UniqueConstraint(
                 fields=["catalog", "code"],

@@ -38,7 +38,6 @@ INSTALLED_APPS = [
 
     'api',
     'api.address',
-    'api.affiliate',
     'api.AI',
     'api.analytic',
     'api.auth',
@@ -49,6 +48,7 @@ INSTALLED_APPS = [
     'api.customer',
     'api.ecommerce',
     'api.erp',
+    'api.financial',
     'api.marketing',
     'api.nf',
     'api.notification',
@@ -79,6 +79,9 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'dj_rest_auth.registration',
     'allauth.socialaccount.providers.google',
+
+    "django.contrib.contenttypes",
+    "polymorphic"
 
 ]
 

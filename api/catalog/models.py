@@ -4,11 +4,29 @@ import re
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 
+from django.utils.text import slugify
+
+from api.category.models import BusinessCategory
+
 User = get_user_model()
 
 class Catalog(models.Model):
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=False, related_name="owned_catalogs")
+
+    name = models.CharField(
+
+        verbose_name='Nome da empresa', max_length=155,
+        null=True, blank=True
+
+    )
+
+    slug = models.SlugField(
+
+        unique=True, blank=True,
+        null=True, max_length=255
+
+    )
 
     photo_img = models.URLField(
         verbose_name='Logotipo da empresa',
@@ -20,19 +38,111 @@ class Catalog(models.Model):
         blank=True
     )
 
+    minimum_order_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Valor mínimo por pedido"
+    )
+
+    minimum_order_value_free_shipping = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Valor mínimo por pedido para frete grátis"
+    )
+
+    business_category = models.ForeignKey(
+
+        BusinessCategory,
+        verbose_name='Categoria da Empresa',
+        null=True, blank=True,
+        on_delete=models.SET_NULL
+
+    )
+
     about = models.TextField(default='Meu catálogo digital ; )')
-    slug = models.SlugField(max_length=255, unique=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
 
+        if not self.slug and self.name:
+
+            base_slug = slugify(self.name)
+            slug = base_slug
+
+            while Catalog.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+
+                slug = f"{base_slug}-{slugify(self.user.address)}"
+
+            self.slug = slug
+
         super().save(*args, **kwargs)
 
     def __str__(self):
 
         return f'Catálogo de {self.user.username}'
+    
+class OpeningHours(models.Model):
+
+    WEEKDAY_CHOICES = (
+        (0, "Segunda-feira"),
+        (1, "Terça-feira"),
+        (2, "Quarta-feira"),
+        (3, "Quinta-feira"),
+        (4, "Sexta-feira"),
+        (5, "Sábado"),
+        (6, "Domingo"),
+    )
+
+    catalog = models.ForeignKey(
+        "Catalog",
+        on_delete=models.CASCADE,
+        related_name="opening_hours",
+        verbose_name="Catálogo"
+    )
+
+    weekday = models.IntegerField(
+        choices=WEEKDAY_CHOICES,
+        verbose_name="Dia da semana"
+    )
+
+    open_time = models.TimeField(
+        verbose_name="Abre às",
+        null=True,
+        blank=True
+    )
+
+    close_time = models.TimeField(
+        verbose_name="Fecha às",
+        null=True,
+        blank=True
+    )
+
+    is_closed = models.BooleanField(
+        default=False,
+        verbose_name="Fechado neste dia"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+
+        verbose_name = "Horário de funcionamento"
+        verbose_name_plural = "Horários de funcionamento"
+
+        ordering = ["weekday", "open_time"]
+        
+        unique_together = ("catalog", "weekday", "open_time")
+
+    def __str__(self):
+
+        return f"{self.catalog} - {self.get_weekday_display()}"
     
 class Link(models.Model):
 
@@ -54,7 +164,7 @@ class Link(models.Model):
         related_name='links'
     )
 
-    url = models.URLField("Link da rede social")
+    url = models.URLField("Link da rede social", null=True, blank=True)
 
     social_name = models.CharField(
         max_length=20,

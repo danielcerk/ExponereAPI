@@ -1,10 +1,10 @@
 from django.apps import AppConfig
 
 
-class PluginConfig(AppConfig):
+class QrcodeConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'api.plugin'
+    name = 'api.qrcode'
 
     def ready(self):
         
-        import api.plugin.signals
+        import api.qrcode.signals

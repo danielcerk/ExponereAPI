@@ -6,14 +6,18 @@ from .models import Address
 class AddressModelAdmin(admin.ModelAdmin):
 
     list_display = [
-
         'street', 'neighborhood', 'cep', 'city',
         'state', 'full_address'
-
     ]
 
     list_filter = [
-
         'city', 'state'
-
     ]
+
+    search_fields = (
+        'street',
+        'neighborhood',
+        'cep',
+        'city',
+        'state',
+    )

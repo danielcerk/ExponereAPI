@@ -1,7 +1,13 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Catalog, Link
+from .models import ( 
+
+    Catalog, 
+    Link, 
+    OpeningHours
+
+)
 
 class LinkInline(admin.TabularInline):
     
@@ -10,14 +16,15 @@ class LinkInline(admin.TabularInline):
     readonly_fields = ("social_name", "created_at", "updated_at")
     fields = ("url", "social_name", "created_at", "updated_at")
 
-
 @admin.register(Catalog)
 class CatalogAdmin(admin.ModelAdmin):
 
     list_display = (
         "user",
+        "name",
         "photo_preview",
         "banner_preview",
+        "business_category",
         "created_at",
         "updated_at",
     )
@@ -37,7 +44,7 @@ class CatalogAdmin(admin.ModelAdmin):
         }),
 
         ("Informações", {
-            "fields": ("about", "slug")
+            "fields": ("name", "business_category", "minimum_order_value", "minimum_order_value_free_shipping","about", "slug")
         }),
 
         ("Datas", {
@@ -70,6 +77,39 @@ class CatalogAdmin(admin.ModelAdmin):
         return "—"
     banner_preview.short_description = "Banner"
 
+@admin.register(OpeningHours)
+class OpeningHoursAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "catalog",
+        "weekday",
+        "open_time",
+        "close_time",
+        "is_closed",
+        "created_at",
+    )
+
+    list_filter = (
+        "weekday",
+        "is_closed",
+        "catalog",
+    )
+
+    search_fields = (
+        "catalog__name",
+        "catalog__user__username",
+    )
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+    )
+
+    ordering = (
+        "catalog",
+        "weekday",
+        "open_time",
+    )
 
 @admin.register(Link)
 class LinkAdmin(admin.ModelAdmin):

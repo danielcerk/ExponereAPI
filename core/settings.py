@@ -1,17 +1,3 @@
-# Adicionar Product * ( Com multiplas imagens e multiplas categorias)
-# Adicionar Wishlist * ( router vamos puxar Catalog e User )
-# Adicionar Estoque ( Produto ) *
-# Adicionar Order
-# Adicionar sistema de cupom
-
-# Fazer testes unitários e de integração
-# Criar imagem docker
-
-# Adicionar login com google
-# Adicionar Plugin ( GA4, tag manager e Pixel Facebook, Pagseguro com django-pagseguro para pagamentos dos lojistas, e ERPs )
-# Adicionar Analytics ( Com dados de orders e de plugins dos analytics )
-# Ver se conseguimos integrar com sacolinha do Instagram e Catlaogo do Whatsapp
-
 import os
 from pathlib import Path
 
@@ -51,23 +37,52 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_static',
 
     'api',
+    'api.address',
+    'api.AI',
     'api.analytic',
     'api.auth',
+    'api.blog',
     'api.catalog',
     'api.category',
+    'api.coupon',
+    'api.customer',
+    'api.ecommerce',
+    'api.erp',
+    'api.financial',
+    'api.marketing',
+    'api.nf',
+    'api.notification',
     'api.order',
-    'api.plugin',
+    'api.payment',
     'api.product',
+    'api.qrcode',
     'api.wishlist',
-    'api.subscription',
-
+    'api.SEO',
+    'api.shipping',
+    'api.status',
+    'api.stock',
+    #'api.subscription',
+    'api.trend_marketing',
+    
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
     'corsheaders',
-    'cities_light'
+    'cities_light',
+    'anymail',
+    'pagseguro',
+
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'dj_rest_auth.registration',
+    'allauth.socialaccount.providers.google',
+
+    "django.contrib.contenttypes",
+    "polymorphic"
+
 ]
 
 MIDDLEWARE = [
@@ -76,10 +91,19 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'core.middleware.APIKeyMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.ScryptPasswordHasher",
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -87,7 +111,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -127,6 +151,27 @@ else:
         }
     }
 
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    SECURE_REFERRER_POLICY = 'same-origin'
+
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_HTTPONLY = True
+
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SAMESITE = 'Lax'
+
+    CMS_TOOLBAR_ANONYMOUS_ON = False
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -163,7 +208,14 @@ USE_THOUSAND_SEPARATOR = True
 
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = "/static/"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "staticfiles"
+]
+
+STATIC_ROOT = BASE_DIR / "static"
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -247,3 +299,65 @@ else:
     STRIPE_SECRET_KEY = os.getenv('STRIPE_PROD_SECRET_KEY')
     STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PROD_PUBLIC_KEY')
     STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_PROD_WEBHOOK_SECRET')
+
+ANYMAIL = {
+    "MAILGUN_API_KEY": os.getenv('MAILGUN_API_KEY'),
+    "MAILGUN_SENDER_DOMAIN": os.getenv('MAILGUN_SENDER_DOMAIN'),
+    "MAILGUN_API_URL": "https://api.mailgun.net/v3",
+}
+
+EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+DEFAULT_FROM_EMAIL = "postmaster@mg.marketilize.com.br"
+SERVER_EMAIL = "postmaster@mg.marketilize.com.br"
+
+MAILGUN_WELCOME_EMAIL_TEMPLATE = os.getenv('MAILGUN_WELCOME_EMAIL_TEMPLATE')
+MAILGUN_PASSWORD_RESET_EMAIL_TEMPLATE = os.getenv('MAILFUN_PASSWORD_RESET_EMAIL_TEMPLATE')
+MAILGUN_CONFIRMATION_EMAIL_TEMPLATE = os.getenv('MAILGUN_CONFIRMATION_EMAIL_TEMPLATE')
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'suporteconstsoft@gmail.com'
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_UNIQUE_EMAIL = True
+
+GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID') 
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
+
+if DEBUG:
+
+    GOOGLE_OAUTH_CALLBACK_URL = 'http://localhost:3000/api/v1/auth/google/callback/'
+
+else:
+
+    GOOGLE_OAUTH_CALLBACK_URL = os.getenv('GOOGLE_OAUTH_CALLBACK_URL')
+
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APPS": [
+            {
+                "client_id": GOOGLE_OAUTH_CLIENT_ID,
+                "secret": GOOGLE_OAUTH_CLIENT_SECRET,
+                "key": "",
+            },
+        ],
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+    }
+}
+
+# Análise de dados do Google Analytics
+
+GA4_CREDENTIALS = os.getenv('GA4_CREDENTIALS')
+PROPERTY_ID_GA4 = os.getenv('PROPERTY_ID_GA4')

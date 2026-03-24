@@ -1,10 +1,38 @@
 from rest_framework import serializers
-from .models import Catalog, Link
+from .models import  (
+    
+    Catalog, 
+    Link, 
+    OpeningHours
+
+)
 
 from api.cloudinary_utils import ( 
     upload_to_cloudinary, 
     delete_from_cloudinary
 )
+
+class OpeningHoursSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = OpeningHours
+        fields = [
+            "id",
+            "catalog",
+            "weekday",
+            "open_time",
+            "close_time",
+            "is_closed",
+            "created_at",
+            "updated_at",
+        ]
+
+        read_only_fields = [
+            "id",
+            "catalog",
+            "created_at",
+            "updated_at",
+        ]
 
 class LinkSerializer(serializers.ModelSerializer):
 
@@ -14,9 +42,7 @@ class LinkSerializer(serializers.ModelSerializer):
             "id",
             "catalog",
             "url",
-            "slug",
             "social_name",
-            "is_active",
             "created_at",
             "updated_at",
         ]
@@ -29,7 +55,6 @@ class LinkSerializer(serializers.ModelSerializer):
         ]
 
         extra_kwargs = {
-            "slug": {"required": False},
             "social_name": {"required": False},
         }
 
@@ -37,6 +62,7 @@ class LinkSerializer(serializers.ModelSerializer):
 class CatalogSerializer(serializers.ModelSerializer):
 
     link = LinkSerializer(required=False)
+    opening_hours = OpeningHoursSerializer(many=True, required=False)
 
     class Meta:
         model = Catalog
@@ -46,11 +72,14 @@ class CatalogSerializer(serializers.ModelSerializer):
             "name",
             "photo_img",
             "banner_img",
-            "description",
-            "is_active",
+            "minimum_order_value",
+            "minimum_order_value_free_shipping",
+            "business_category",
+            "about",
             "created_at",
             "updated_at",
             "link",
+            "opening_hours",
         ]
 
         read_only_fields = [
@@ -68,6 +97,7 @@ class CatalogSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         link_data = validated_data.pop("link", None)
+        hours_data = validated_data.pop("opening_hours", [])
 
         photo_file = validated_data.pop("photo_img", None)
         banner_file = validated_data.pop("banner_img", None)
@@ -88,11 +118,16 @@ class CatalogSerializer(serializers.ModelSerializer):
 
             Link.objects.create(catalog=catalog, **link_data)
 
+        for hour in hours_data:
+
+            OpeningHours.objects.create(catalog=catalog, **hour)
+
         return catalog
 
     def update(self, instance, validated_data):
 
         link_data = validated_data.pop("link", None)
+        hours_data = validated_data.pop("opening_hours", None)
 
         new_photo = validated_data.pop("photo_img", None)
         new_banner = validated_data.pop("banner_img", None)
@@ -121,7 +156,7 @@ class CatalogSerializer(serializers.ModelSerializer):
 
         if link_data:
 
-            link_instance = getattr(instance, "link", None)
+            link_instance = instance.links.first()
 
             if link_instance:
 
@@ -134,5 +169,13 @@ class CatalogSerializer(serializers.ModelSerializer):
             else:
 
                 Link.objects.create(catalog=instance, **link_data)
+
+        if hours_data is not None:
+
+            instance.opening_hours.all().delete()
+
+            for hour in hours_data:
+
+                OpeningHours.objects.create(catalog=instance, **hour)
 
         return instance

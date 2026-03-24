@@ -1,27 +1,27 @@
 from rest_framework import serializers
 
 from .models import ( 
-    Advertisement, 
-    Category, 
-    Feature,
-    AdvertisementFeature,
-    ImageAdvertisement
+    Image,
+    Product,
+    ProductLogisticInfo,
+
 )
+from api.category.serializers import CategorySerializer
 
-from api.supabase_utils import upload_to_supabase
+from api.cloudinary_utils import upload_to_cloudinary
 
-class ImageAdvertisementSerializer(serializers.ModelSerializer):
+class ImageSerializer(serializers.ModelSerializer):
 
     image_upload = serializers.ImageField(write_only=True, required=False)
 
     class Meta:
 
-        model = ImageAdvertisement
+        model = Image
         fields = '__all__'
 
         read_only_fields = ('id',)
         extra_kwargs = {
-            'advertisement': {'required': False}
+            'product': {'required': False}
         }
 
     def create(self, validated_data):
@@ -30,7 +30,7 @@ class ImageAdvertisementSerializer(serializers.ModelSerializer):
 
         if image_file:
 
-            validated_data['image'] = upload_to_supabase(image_file, 'advertisement_images')
+            validated_data['image'] = upload_to_cloudinary(image_file, 'product_images')
 
         return super().create(validated_data)
 
@@ -40,24 +40,22 @@ class ImageAdvertisementSerializer(serializers.ModelSerializer):
 
         if image_file:
 
-            validated_data['image'] = upload_to_supabase(image_file, 'advertisement_images')
+            validated_data['image'] = upload_to_cloudinary(image_file, 'product_images')
 
         return super().update(instance, validated_data)
     
-class AdvertisementSerializer(serializers.ModelSerializer):
+class ProductSerializer(serializers.ModelSerializer):
     
-    images = ImageAdvertisementSerializer(many=True, required=False)
+    images = ImageSerializer(many=True, required=False)
 
     class Meta:
-        model = Advertisement
+        model = Product
         fields = '__all__'
         extra_kwargs = {
             'id': {'read_only': True},
             'user': {'read_only': True},
             'slug': {'read_only': True},
             'is_active': {'read_only': True},
-            'expiry_date': {'read_only': True},
-            'deletion_date': {'read_only': True},
             'created_at': {'read_only': True},
             'updated_at': {'read_only': True},
         }
@@ -75,9 +73,9 @@ class AdvertisementSerializer(serializers.ModelSerializer):
         images_files = request.FILES.getlist('images')
 
         for img in images_files:
-            ImageAdvertisement.objects.create(
+            ImageSerializer.objects.create(
                 advertisement=advertisement,
-                image=upload_to_supabase(img, 'advertisement_images')
+                image=upload_to_cloudinary(img, 'advertisement_images')
             )
 
         for f in features_data:
@@ -111,9 +109,9 @@ class AdvertisementSerializer(serializers.ModelSerializer):
         images_files = request.FILES.getlist('images')
 
         for img in images_files:
-            ImageAdvertisement.objects.create(
+            ImageSerializer.objects.create(
                 advertisement=instance,
-                image=upload_to_supabase(img, 'advertisement_images')
+                image=upload_to_cloudinary(img, 'advertisement_images')
             )
 
         if features_data is not None:

@@ -9,111 +9,151 @@ from datetime import date
 
 from api.address.models import Address
 
+from django.utils import timezone
+import uuid
+
+from django.conf import settings
+
 class UserManager(BaseUserManager):
 
-	def create_user(self, username, email=None, first_name=None, last_name=None, password=None):
+    def get_by_natural_key(self, email):
+        return self.get(email=email)
 
-		if not email:
+    def create_user(
+        self,
+        username,
+        email=None,
+        first_name=None,
+        last_name=None,
+        password=None,
+        terms_of_use_is_ready=False,
+        is_affiliate=False,
+        owner=None,
+        role="reader",
+        catalog=None,
+    ):
+        if not email:
+            raise ValueError("O usuário deve ter um endereço de email.")
 
-			raise ValueError('O usuário deve ter um endereço de email.')
+        email = self.normalize_email(email)
 
-		email = self.normalize_email(email)
-		user = self.model(username=username, email=email,
-			first_name=first_name, last_name=last_name,)
-
-		if password:
-
-			user.set_password(password)
-
-		user.full_clean()
-		user.save(using=self._db)
-
-		return user
-
-	def create_superuser(self, username, email, password, first_name=None, last_name=None):
-
-		user = self.create_user(
+        user = self.model(
             username=username,
             email=email,
             first_name=first_name,
             last_name=last_name,
-            password=password,
+            terms_of_use_is_ready=terms_of_use_is_ready,
+            is_affiliate=is_affiliate,
+            owner=owner,
+            role=role,
+            catalog=catalog if catalog else (owner.catalog if owner else None),
         )
-		user.is_superuser = True
-		user.is_staff = True
 
-		user.save(using=self._db)
+        if password:
+            user.set_password(password)
 
-		return user
+        user.full_clean()
+        user.save(using=self._db)
+
+        return user
+
+    def create_superuser(
+        self,
+        email,
+        username=None,
+        password=None,
+        first_name=None,
+        last_name=None,
+        **extra_fields
+    ):
+        user = self.create_user(
+            username=username or email,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            password=password,
+            role="admin",
+        )
+
+        user.is_superuser = True
+        user.is_staff = True
+        user.is_active = True
+        user.owner = user  # ele é o próprio dono
+
+        user.save(using=self._db)
+
+        return user
+
 
 class UserProfile(AbstractBaseUser, PermissionsMixin):
-    
-    username = models.CharField(
-		max_length=255, 
-		verbose_name='Nome de usuário',
-		unique=True
-	)
-    email = models.EmailField(
-		max_length=255, 
-		unique=True, 
-		verbose_name='Email'
-	)
-    first_name = models.CharField(
-		max_length=30, 
-		blank=True, null=True, 
-		verbose_name='Primeiro nome'
-	)
-    last_name = models.CharField(
-		max_length=150, 
-		blank=True, null=True, 
-		verbose_name='Último nome'
-	)
-    
-    full_name = models.CharField(
-		max_length=255, 
-		blank=True, null=True, 
-		verbose_name='Nome completo'
-	)
-    
+
+    ROLE_CHOICES = (
+        ("admin", "Administrador"),
+        ("reader", "Leitor"),
+    )
+
+    username = models.CharField(max_length=255, unique=True)
+    email = models.EmailField(max_length=255, unique=True)
+
+    first_name = models.CharField(max_length=30, blank=True, null=True)
+    last_name = models.CharField(max_length=150, blank=True, null=True)
+    full_name = models.CharField(max_length=255, blank=True, null=True)
+
+    owner = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="team_members",
+        verbose_name="Dono do workspace"
+    )
+
+    role = models.CharField(
+        max_length=10,
+        choices=ROLE_CHOICES,
+        default="reader"
+    )
+
+    catalog = models.ForeignKey(
+        "catalog.Catalog",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="users"
+    )
+
+    is_affiliate = models.BooleanField(default=False)
+    terms_of_use_is_ready = models.BooleanField(default=False)
+
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     objects = UserManager()
-    
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
-    
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Criado em')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
-    
-    is_active = models.BooleanField(default=True, verbose_name="Está ativo")
-    is_staff = models.BooleanField(default=False, verbose_name='É moderador')
-    is_superuser = models.BooleanField(default=False, verbose_name='É superusuário')
-    
-    def __str__(self):
-        
-        return f'Usuário {self.username} - {self.id}'
-    
+
     def save(self, *args, **kwargs):
 
-        self.full_name = f'{self.first_name} {self.last_name}'
-        
-        if self.pk is None or not UserProfile.objects.filter(pk=self.pk).exists():
+        self.full_name = f"{self.first_name or ''} {self.last_name or ''}".strip()
 
-            if self.password and not self.password.startswith('pbkdf2_'):
+        if not self.catalog and self.owner:
 
-                self.set_password(self.password)
-        else:
-    
-            old = UserProfile.objects.get(pk=self.pk)
+            self.catalog = self.owner.catalog
 
-            if self.password != old.password and not self.password.startswith('pbkdf2_'):
-                
-                self.set_password(self.password)
+        super().save(*args, **kwargs)
 
-        super().save(*args, **kwargs)   
-        
+    def __str__(self):
+        return f"{self.email} ({self.role})"
+
     class Meta:
-         
+
         verbose_name = 'Usuário'
-        verbose_name_plural ='Usuários'
+        verbose_name_plural = 'Usuários'
 
 
 class Profile(models.Model):
@@ -198,3 +238,67 @@ class Profile(models.Model):
     def __str__(self):
 
         return f'Perfil de {self.user.username} - {self.user.id}'
+    
+class PasswordReset(models.Model):
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="password_resets"
+    )
+
+    email = models.EmailField()
+
+    token = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False
+    )
+
+    is_used = models.BooleanField(
+        default=False
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    expires_at = models.DateTimeField()
+
+    used_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True
+    )
+
+    user_agent = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+
+        indexes = [
+            models.Index(fields=["email"]),
+            models.Index(fields=["token"]),
+        ]
+        ordering = ["-created_at"]
+
+    def is_expired(self):
+
+        return timezone.now() > self.expires_at
+
+    def mark_as_used(self):
+
+        self.is_used = True
+        self.used_at = timezone.now()
+
+        self.save(update_fields=["is_used", "used_at"])
+
+    def __str__(self):
+
+        return f"Password reset for {self.email}"

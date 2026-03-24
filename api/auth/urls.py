@@ -7,8 +7,12 @@ from .views import (
     RegisterView,
     LogoutAPIView,
     AccountViewSet,
+    GoogleLogin, 
+    GoogleLoginCallback,
     setup_2fa,
-    confirm_2fa
+    confirm_2fa,
+    ResetPassword,
+    RequestPasswordReset
 )
 
 router = DefaultRouter()
@@ -20,9 +24,20 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('register/', RegisterView.as_view(), name='register'),
     path('', include(router.urls)),
+
+    path("google/", GoogleLogin.as_view(), name="google_login"),
+    path(
+        "google/callback/",
+        GoogleLoginCallback.as_view(),
+        name="google_login_callback",
+    ),
+
     path('logout/', LogoutAPIView.as_view(), name ='logout'),
 
     path("2fa/setup/", setup_2fa),
     path("2fa/confirm/", confirm_2fa, name="confirm-2fa"),
+
+    path('reset/password/request', RequestPasswordReset.as_view(), name='reset_password_request'),
+    path('reset/password/update', ResetPassword.as_view(), name='reset_password_update'),
 
 ]

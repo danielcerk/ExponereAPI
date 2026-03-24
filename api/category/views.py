@@ -2,12 +2,12 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import (
 
     BasePermission,
-    SAFE_METHODS
+    SAFE_METHODS,
 
 )
 
-from .models import Category
-from .serializers import CategorySerializer
+from .models import Category, BusinessCategory
+from .serializers import CategorySerializer, BusinessCategorySerializer
 
 class IsOwnerOrReadOnly(BasePermission):
 
@@ -23,7 +23,24 @@ class IsOwnerOrReadOnly(BasePermission):
         if request.method in SAFE_METHODS:
             return True
 
-        return obj.user == request.user
+        return obj.catalog.user == request.user
+    
+class IsAdminOrReadOnly(BasePermission):
+
+    def has_permission(self, request, view):
+
+        if request.method in SAFE_METHODS:
+
+            return True
+
+        return request.user and request.user.is_authenticated and request.user.is_staff
+
+    def has_object_permission(self, request, view, obj):
+
+        if request.method in SAFE_METHODS:
+
+            return True
+        return request.user and request.user.is_authenticated and request.user.is_staff
 
 class CategoryViewSet(ModelViewSet):
 
@@ -36,14 +53,21 @@ class CategoryViewSet(ModelViewSet):
 
         return Category.objects.filter(
 
-            catalog_id=self.kwargs["catalog_pk"]
+            catalog__id=self.kwargs["catalog_pk"]
 
         )
+    
+class BusinessCategoryViewSet(ModelViewSet):
 
-    def perform_create(self, serializer):
+    permission_classes = [IsAdminOrReadOnly]
 
-        serializer.save(
+    queryset = BusinessCategory.objects.all()
+    serializer_class = BusinessCategorySerializer
 
-            catalog_id=self.kwargs["catalog_pk"]
-            
+    def get_queryset(self):
+
+        return BusinessCategory.objects.filter(
+
+            catalog__id=self.kwargs["catalog_pk"]
+
         )

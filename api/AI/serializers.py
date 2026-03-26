@@ -10,7 +10,27 @@ def generate_copy(content):
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=f'Responda de maneira triste a esse conteúdo: {content}',
+        contents=f"""
+    Crie uma copy persuasiva de marketing para o seguinte produto:
+
+    {content}
+
+    Instruções:
+    - Destaque benefícios claros e práticos (não apenas características).
+    - Utilize gatilhos mentais como escassez, urgência, prova social e autoridade, quando fizer sentido.
+    - Linguagem simples, direta e envolvente.
+    - Estruture o texto de forma fluida (pode usar pequenos parágrafos ou listas curtas).
+    - Foque em conversão (como se fosse para página de vendas ou anúncio).
+
+    Restrições:
+    - NÃO inclua introduções como "Aqui está", "Segue abaixo", etc.
+    - NÃO explique o que você está fazendo.
+    - NÃO use títulos como "Copy:" ou similares.
+    - Retorne APENAS o texto final da copy.
+
+    Objetivo:
+    Gerar um texto convincente que aumente o interesse e a chance de compra do produto.
+    """
     )
 
     return content

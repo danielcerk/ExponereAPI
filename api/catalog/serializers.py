@@ -8,8 +8,8 @@ from .models import  (
 )
 
 from api.cloudinary_utils import ( 
-    upload_to_cloudinary, 
-    delete_from_cloudinary
+    upload_to_cloudinary_img, 
+    delete_from_cloudinary_img
 )
 
 class OpeningHoursSerializer(serializers.ModelSerializer):
@@ -106,11 +106,11 @@ class CatalogSerializer(serializers.ModelSerializer):
 
         if photo_file:
 
-            catalog.photo_img = upload_to_cloudinary(photo_file)
+            catalog.photo_img = upload_to_cloudinary_img(photo_file)
 
         if banner_file:
 
-            catalog.banner_img = upload_to_cloudinary(banner_file)
+            catalog.banner_img = upload_to_cloudinary_img(banner_file)
 
         catalog.save()
 
@@ -136,17 +136,17 @@ class CatalogSerializer(serializers.ModelSerializer):
 
             if instance.photo_img:
 
-                delete_from_cloudinary(instance.photo_img)
+                delete_from_cloudinary_img(instance.photo_img)
 
-            instance.photo_img = upload_to_cloudinary(new_photo)
+            instance.photo_img = upload_to_cloudinary_img(new_photo)
 
         if new_banner is not None:
 
             if instance.banner_img:
 
-                delete_from_cloudinary(instance.banner_img)
+                delete_from_cloudinary_img(instance.banner_img)
 
-            instance.banner_img = upload_to_cloudinary(new_banner)
+            instance.banner_img = upload_to_cloudinary_img(new_banner)
 
         for attr, value in validated_data.items():
 

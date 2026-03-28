@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from urllib.parse import urlparse, parse_qsl
 from datetime import timedelta
 
+import re
+
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -371,3 +373,24 @@ STRAPI_API_KEY = os.getenv('STRAPI_API_KEY')
 STRAPI_ARTICLE_URL = os.getenv('STRAPI_ARTICLE_URL')
 STRAPI_CATEGORY_URL = os.getenv('STRAPI_CATEGORY_URL')
 
+def get_redis_password(url):
+
+    pattern = r"redis:\/\/(?:[^:]+:)?([^@]+)@"
+    match = re.search(pattern, url)
+
+    return match.group(1) if match else None
+
+
+REDIS_URL = CELERY_BROKER_URL
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'PASSWORD': get_redis_password(REDIS_URL),
+        },
+        'TIMEOUT': 60 * 60,
+    }
+}

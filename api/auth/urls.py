@@ -38,6 +38,10 @@ urlpatterns = [
     path("2fa/confirm/", confirm_2fa, name="confirm-2fa"),
 
     path('reset/password/request', RequestPasswordReset.as_view(), name='reset_password_request'),
-    path('reset/password/update', ResetPassword.as_view(), name='reset_password_update'),
+    path(
+        'reset/password/update/<str:token>/',
+        ResetPassword.as_view(),
+        name='reset_password_update'
+    )
 
 ]

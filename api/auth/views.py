@@ -38,9 +38,9 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from .models import PasswordReset 
 import os 
 
-from api.notification.utils import (
-    send_password_reset_email,
-    send_password_changed_email
+from api.notification.tasks import (
+    send_password_reset_email_task,
+    send_password_changed_email_task
 )
 
 User = get_user_model()
@@ -231,13 +231,13 @@ class RequestPasswordReset(generics.GenericAPIView):
 
             if settings.DEBUG:
 
-                reset_url = f"https://exponere.com.br/{token}"
+                reset_url = f"https://exponere.com.br/auth/reset/password/update/{token}/"
 
             else:
 
-                reset_url = f"http://127.0.0.1:8000/{token}"
+                reset_url = f"http://127.0.0.1:8000/auth/reset/password/update/{token}/"
 
-            send_password_reset_email(user, reset_url)
+            send_password_reset_email_task(user, reset_url)
 
             return Response(
                 {"success": "We have sent you a link to reset your password"},
@@ -282,6 +282,6 @@ class ResetPassword(generics.GenericAPIView):
 
         reset_obj.delete()
 
-        send_password_changed_email(user)
+        send_password_changed_email_task(user)
 
         return Response({"success": "Password updated"}, status=200)

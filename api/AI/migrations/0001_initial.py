@@ -12,19 +12,17 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Keyword',
+            name='CopyProduct',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('keyword', models.CharField(max_length=50, verbose_name='Palavra-chave')),
-                ('slug', models.SlugField(blank=True, max_length=60, verbose_name='Slug')),
-                ('is_active', models.BooleanField(default=True, verbose_name='Ativo')),
+                ('description', models.TextField(blank=True, verbose_name='Descrição')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Criado em')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Atualizado em')),
             ],
             options={
-                'verbose_name': 'Palavra-chave',
-                'verbose_name_plural': 'Palavras-chave',
-                'ordering': ['keyword'],
+                'verbose_name': 'Copy de Produto',
+                'verbose_name_plural': 'Copies de produtos',
+                'ordering': ['-created_at'],
             },
         ),
     ]

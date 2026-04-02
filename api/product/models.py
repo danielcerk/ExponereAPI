@@ -2,7 +2,9 @@ from django.db import models
 from django.utils.text import slugify
 
 from api.catalog.models import Catalog
-from api.category.models import Category
+from api.category.models import Category, SubCategory
+
+from django.core.exceptions import ValidationError
 
 class Product(models.Model):
 
@@ -36,6 +38,13 @@ class Product(models.Model):
     category = models.ManyToManyField(
         Category,
         verbose_name='Categorias',
+        blank=True
+        
+    )
+
+    subcategory = models.ManyToManyField(
+        SubCategory,
+        verbose_name='Subcategorias',
         blank=True
         
     )
@@ -235,7 +244,7 @@ class ProductLogisticInfo(models.Model):
 class Image(models.Model):
 
     product = models.ForeignKey(
-        'Product',
+        'product.Product',
         verbose_name='Produto',
         on_delete=models.CASCADE,
         null=True,
@@ -290,6 +299,19 @@ class Image(models.Model):
 
     def save(self, *args, **kwargs):
 
-        self.alt_text = f'Foto de {self.product.title} da {self.product.catalog.name} localizado(a) em {self.product.catalog.user.address}'
+        count_image_per_prod = Image.objects.filter(
+            product=self.product
+        ).count()
+
+        if count_image_per_prod >= 3 and not self.pk:
+
+            raise ValidationError('Este produto já possui o máximo de 3 imagens.')
+
+        if not self.alt_text:
+
+            self.alt_text = (
+                f'Foto de {self.product.title} da {self.product.catalog.name} '
+                f'localizado(a) em {self.product.catalog.user.address}'
+            )
 
         super().save(*args, **kwargs)

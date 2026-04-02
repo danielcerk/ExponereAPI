@@ -71,6 +71,7 @@ class ProductAdmin(admin.ModelAdmin):
 
     filter_horizontal = (
         "category",
+        "subcategory"
     )
 
     inlines = [

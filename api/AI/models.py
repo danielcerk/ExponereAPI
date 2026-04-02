@@ -12,7 +12,7 @@ class CopyProduct(models.Model):
     )
 
     product = models.ForeignKey(
-        'Product',
+        'product.Product',
         verbose_name='Produto',
         on_delete=models.CASCADE,
         null=True,
@@ -40,12 +40,11 @@ class CopyProduct(models.Model):
 
     class Meta:
 
-        verbose_name = 'Imagem de Anúncio'
-        verbose_name_plural = 'Imagens de Anúncios'
+        verbose_name = 'Copy de Produto'
+        verbose_name_plural = 'Copies de produtos'
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['product']),
-            models.Index(fields=['is_main']),
             models.Index(fields=['created_at']),
         ]
 

@@ -3,6 +3,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 
 from api.catalog.models import Catalog
+from api.customer.models import Customer
 
 class Coupon(models.Model):
 
@@ -244,3 +245,33 @@ class CouponFirstBuy(Coupon):
             return Decimal("0.00")
 
         return order_total * (self.percent_discount / Decimal("100"))
+    
+class CouponUsage(models.Model):
+
+    coupon = models.ForeignKey(
+        Coupon,
+        on_delete=models.CASCADE,
+        related_name="usages"
+    )
+
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        related_name="coupon_usages"
+    )
+
+    order = models.ForeignKey(
+        "order.Order",
+        on_delete=models.CASCADE,
+        related_name="coupon_usages",
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["coupon", "customer"]),
+        ]

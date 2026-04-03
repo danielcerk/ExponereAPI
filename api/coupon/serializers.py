@@ -5,7 +5,8 @@ from .models import (
     CouponProgressive,
     CouponFixedValue,
     CouponPercentValue,
-    CouponFirstBuy
+    CouponFirstBuy,
+    CouponUsage
 )
 
 class BaseCouponSerializer(serializers.ModelSerializer):
@@ -25,24 +26,26 @@ class BaseCouponSerializer(serializers.ModelSerializer):
             "end_date",
             "created_at",
             "updated_at",
-            "is_valid_coupon",
+            "is_valid_coupon",g
         ]
         read_only_fields = ("usage_count", "created_at", "updated_at")
 
     def get_is_valid_coupon(self, obj):
+
         return obj.is_valid()
 
     def validate(self, data):
+
         start_date = data.get("start_date")
         end_date = data.get("end_date")
 
         if start_date and end_date and start_date > end_date:
+            
             raise serializers.ValidationError(
                 "A data de início não pode ser maior que a data de expiração."
             )
 
         return data
-
 
 class CouponProgressiveSerializer(BaseCouponSerializer):
 
@@ -68,7 +71,6 @@ class CouponProgressiveSerializer(BaseCouponSerializer):
             )
 
         return data
-
 
 class CouponFixedValueSerializer(BaseCouponSerializer):
 
@@ -104,7 +106,6 @@ class CouponPercentValueSerializer(BaseCouponSerializer):
 
         return data
 
-
 class CouponFirstBuySerializer(BaseCouponSerializer):
 
     class Meta(BaseCouponSerializer.Meta):
@@ -114,3 +115,30 @@ class CouponFirstBuySerializer(BaseCouponSerializer):
             "percent_discount",
             "min_purchase_value",
         ]
+
+class CouponUsageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = CouponUsage
+        fields = '__all__'
+
+        read_only_fields = ("coupon", "customer", "order", "created_at", "updated_at")
+
+class CouponDynamicSerializer(serializers.Serializer):
+
+    def to_representation(self, instance):
+
+        if isinstance(instance, CouponProgressive):
+            return CouponProgressiveSerializer(instance).data
+
+        if isinstance(instance, CouponFixedValue):
+            return CouponFixedValueSerializer(instance).data
+
+        if isinstance(instance, CouponPercentValue):
+            return CouponPercentValueSerializer(instance).data
+
+        if isinstance(instance, CouponFirstBuy):
+            return CouponFirstBuySerializer(instance).data
+
+        return None

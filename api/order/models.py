@@ -6,8 +6,7 @@ from decimal import Decimal
 from api.catalog.models import Catalog
 from api.customer.models import Customer
 from api.wishlist.models import Wishlist
-from api.coupon.models import Coupon
-
+from api.coupon.models import Coupon, CouponFirstBuy
 
 class Order(models.Model):
 
@@ -85,12 +84,44 @@ class Order(models.Model):
     def __str__(self):
 
         return f'Pedido #{self.id} de {self.customer.full_name} - {self.catalog.name} às {self.created_at}'
+    
+    def is_first_buy(self):
+
+        return not Order.objects.filter(
+            customer=self.customer,
+            is_paid=True
+        ).exclude(id=self.id).exists()
+    
+    def get_first_buy_coupon(self):
+
+        return CouponFirstBuy.objects.filter(
+            catalog=self.catalog,
+            is_active=True
+        ).first()
+    
+    def apply_first_buy_coupon(self):
+
+        if self.coupon:
+
+            return 
+
+        if not self.is_first_buy():
+
+            return
+
+        coupon = self.get_first_buy_coupon()
+
+        if coupon and coupon.is_valid():
+
+            self.coupon = coupon
 
     def calculate_totals(self):
 
         subtotal = sum(
             [(item.wishlist_product.price * item.wishlist_product.quantity) for item in self.items.all()]
         )
+
+        self.apply_first_buy_coupon()
 
         discount = Decimal("0.00")
 
@@ -104,12 +135,12 @@ class Order(models.Model):
         self.discount = discount
         self.total = total if total > 0 else Decimal("0.00")
 
+
     def save(self, *args, **kwargs):
 
         self.calculate_totals()
         
         super().save(*args, **kwargs)
-
 
 class ProductOrder(models.Model):
 
@@ -147,4 +178,4 @@ class ProductOrder(models.Model):
 
     def __str__(self):
 
-        return f'{self.wishlist_product} ({self.quantity}x)'
+        return f'{self.wishlist_product} ({self.wishlist_product.quantity}x)'

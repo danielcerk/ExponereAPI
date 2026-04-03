@@ -76,6 +76,7 @@ class StockMovementAdmin(admin.ModelAdmin):
         "type",
         "quantity",
         "reference",
+        "purchase_price",
         "created_at",
     )
 

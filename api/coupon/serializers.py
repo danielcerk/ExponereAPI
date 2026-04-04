@@ -26,7 +26,7 @@ class BaseCouponSerializer(serializers.ModelSerializer):
             "end_date",
             "created_at",
             "updated_at",
-            "is_valid_coupon",g
+            "is_valid_coupon"
         ]
         read_only_fields = ("usage_count", "created_at", "updated_at")
 

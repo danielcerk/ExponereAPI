@@ -5,8 +5,7 @@ from datetime import timedelta
 
 from api.catalog.models import Catalog
 from api.stock.models import StockMovement
-from api.order.models import Order
-from api.order.models import OrderItem
+from api.order.models import Order, ProductOrder
 
 
 def get_catalog(id):
@@ -75,7 +74,7 @@ def best_selling_product(id, **filters):
 
     cat = get_catalog(id)
 
-    qs = OrderItem.objects.filter(
+    qs = ProductOrder.objects.filter(
         order__catalog=cat,
         order__is_paid=True
     )
@@ -96,7 +95,7 @@ def worst_selling_product(id, **filters):
 
     cat = get_catalog(id)
 
-    qs = OrderItem.objects.filter(
+    qs = ProductOrder.objects.filter(
         order__catalog=cat,
         order__is_paid=True
     )

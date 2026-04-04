@@ -68,6 +68,7 @@ class ShippingStatus(models.Model):
     '''
 
     class StatusChoices(models.TextChoices):
+        
         PENDING = "pending", "Pendente"
         IN_TRANSIT = "in_transit", "Em trânsito"
         OUT_FOR_DELIVERY = "out_for_delivery", "Saiu para entrega"
@@ -76,7 +77,7 @@ class ShippingStatus(models.Model):
         RETURNED = "returned", "Devolvido"
 
     order = models.ForeignKey(
-        "orders.Order", 
+        "order.Order", 
         on_delete=models.CASCADE,
         related_name="shipping_statuses",
         verbose_name="Pedido"

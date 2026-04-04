@@ -5,6 +5,9 @@ from decimal import Decimal
 
 from api.product.models import Product
 
+from django.core.validators import validate_email
+from django.utils.translation import gettext_lazy as _
+
 class Stock(models.Model):
 
     product = models.OneToOneField(
@@ -208,3 +211,81 @@ class StockMovement(models.Model):
     def __str__(self):
 
         return f'{self.type} - {self.quantity} ({self.stock.product})'
+    
+class AlertProductStock(models.Model):
+
+    email = models.EmailField(
+        _('E-mail'),
+        max_length=255,
+        db_index=True
+    )
+
+    product = models.ForeignKey(
+        'product.Product',
+        verbose_name=_('Produto'),
+        on_delete=models.CASCADE,
+        related_name='alerts',
+        db_index=True,
+    )
+
+    is_active = models.BooleanField(
+        _('Ativo'),
+        default=True
+    )
+
+    notified = models.BooleanField(
+        _('Já notificado'),
+        default=False,
+        help_text=_('Indica se o usuário já foi notificado sobre o estoque.')
+    )
+
+    created_at = models.DateTimeField(
+        _('Criado em'),
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        _('Atualizado em'),
+        auto_now=True
+    )
+
+    class Meta:
+        verbose_name = _('Alerta de estoque')
+        verbose_name_plural = _('Alertas de estoque')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['email', 'product']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['email', 'product'],
+                name='unique_email_product_alert'
+            )
+        ]
+
+    def __str__(self):
+        return f'Alerta de estoque: {self.product.name} - {self.email}'
+
+    def deactivate(self):
+
+        self.is_active = False
+        self.save(update_fields=['is_active', 'updated_at'])
+
+    def mark_as_notified(self):
+
+        self.notified = True
+        self.save(update_fields=['notified', 'updated_at'])
+
+    @property
+    def is_pending(self):
+
+        return self.is_active and not self.notified
+
+    def clean(self):
+
+        validate_email(self.email)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+

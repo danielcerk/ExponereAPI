@@ -8,6 +8,8 @@ from api.product.models import Product
 from django.core.validators import validate_email
 from django.utils.translation import gettext_lazy as _
 
+from .tasks import send_reminder_product_stock_available
+
 class Stock(models.Model):
 
     product = models.OneToOneField(

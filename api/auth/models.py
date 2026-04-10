@@ -8,11 +8,19 @@ from django.utils.translation import gettext_lazy as _
 from datetime import date
 
 from api.address.models import Address
+from api.utils import validate_no_repeated_chars
 
 from django.utils import timezone
 import uuid
 
 from django.conf import settings
+
+cpf_cnpj_validator = RegexValidator(
+
+    regex=r'^[A-Za-z0-9./-]{11,18}$',
+    message='Digite um CPF ou CNPJ válido (alfanumérico permitido).'
+
+)
 
 class UserManager(BaseUserManager):
 
@@ -169,10 +177,8 @@ class Profile(models.Model):
         verbose_name='CPF ou CNPJ',
         max_length=18,
         validators=[
-            RegexValidator(
-                regex=r'^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$',
-                message='Digite um CPF (XXX.XXX.XXX-XX) ou CNPJ (XX.XXX.XXX/XXXX-XX) válido'
-            )
+            cpf_cnpj_validator,
+            validate_no_repeated_chars
         ],
         unique=True,
         null=True,

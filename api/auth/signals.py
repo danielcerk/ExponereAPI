@@ -3,6 +3,8 @@ from django.db.models.signals import post_save
 
 from .models import UserProfile, Profile
 
+from api.notification.tasks import send_welcome_email_task
+
 @receiver(post_save, sender=UserProfile)
 def create_profile_user(sender, instance, created, **kwargs):
     
@@ -10,5 +12,11 @@ def create_profile_user(sender, instance, created, **kwargs):
 
         Profile.objects.create(
             user=instance,
+        )
+
+        send_welcome_email_task.delay(
+
+            instance.email, instance.username
+
         )
 		

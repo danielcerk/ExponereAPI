@@ -13,7 +13,6 @@ from django.contrib.auth import authenticate
 
 from api.address.serializers import AddressSerializer
 
-from api.notification.tasks import send_welcome_email_task
 
 User = get_user_model()
 
@@ -166,12 +165,6 @@ class RegisterSerializer(serializers.ModelSerializer):
 
                 role="admin",
             )
-
-        send_welcome_email_task.delay(
-
-            validated_data['email'], validated_data['username']
-
-        )
 
         return user
     

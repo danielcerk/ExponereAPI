@@ -17,7 +17,7 @@ class ArticlesView(APIView):
         page = request.query_params.get("page", 1)
 
         serializer = ArticlesSerializer(
-
+            instance={},
             context={
 
                 "sort": sort,
@@ -38,7 +38,7 @@ class ArticleView(APIView):
         slug = self.kwargs.get("post_slug")
 
         serializer = ArticleBySlugSerializer(
-
+            instance={},
             context={"slug": slug}
 
         )

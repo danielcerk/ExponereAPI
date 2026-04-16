@@ -7,23 +7,24 @@ class ArticlesSerializer(serializers.Serializer):
     articles = serializers.SerializerMethodField()
     pagination = serializers.SerializerMethodField()
 
+    def _get_data(self):
+
+        if not hasattr(self, "_cached_data"):
+
+            sort = self.context.get("sort")
+            page = self.context.get("page", 1)
+
+            self._cached_data = get_all_articles(sort=sort, page=page)
+
+        return self._cached_data
+
     def get_articles(self, obj):
 
-        sort = self.context.get("sort")
-        page = self.context.get("page", 1)
-
-        data = get_all_articles(sort=sort, page=page)
-
-        return data.get("articles", [])
+        return self._get_data().get("articles", [])
 
     def get_pagination(self, obj):
-
-        sort = self.context.get("sort")
-        page = self.context.get("page", 1)
-
-        data = get_all_articles(sort=sort, page=page)
-
-        return data.get("pagination", {})
+        
+        return self._get_data().get("pagination", {})
     
 class ArticleBySlugSerializer(serializers.Serializer):
     

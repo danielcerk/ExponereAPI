@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+NGROK_command.txt
 README_blog.md
 terms.txt
 privacy.txt

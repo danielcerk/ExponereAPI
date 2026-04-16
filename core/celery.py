@@ -1,4 +1,4 @@
-# Para local, windows: python -m celery -A backend worker -l info -P solo
+# Para local, windows: python -m celery -A core worker -l info -P solo
 # Para produção, linux: python -m celery -A core worker
 
 

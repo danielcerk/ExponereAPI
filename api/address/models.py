@@ -2,7 +2,10 @@ from django.db import models
 
 from cities_light.models import SubRegion, Region
 
-from .utils import verify_cep
+from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
+
+from .utils import verify_cep, validate_no_repeated_digits
 
 class Address(models.Model):
 
@@ -19,8 +22,17 @@ class Address(models.Model):
     )
 
     cep = models.CharField(
-        max_length=8, verbose_name='CEP',
-        null=True, blank=True
+        max_length=8,
+        verbose_name='CEP',
+        null=True,
+        blank=True,
+        validators=[
+            RegexValidator(
+                regex=r'^\d{8}$',
+                message='O CEP deve conter exatamente 8 números (sem hífen ou letras).'
+            ),
+            validate_no_repeated_digits
+        ]
     )
 
     complement = models.TextField(
@@ -48,36 +60,59 @@ class Address(models.Model):
         max_length=255
     )
 
+    def clean(self):
+
+        if self.cep:
+            cleaned = ''.join(filter(str.isdigit, self.cep))
+
+            if not cleaned:
+                raise ValidationError({'cep': 'CEP inválido'})
+
+            self.cep = cleaned
+
     def save(self, *args, **kwargs):
 
-        cep = self.cep
-        address = verify_cep(cep)
+        self.full_clean()
 
-        if cep and address:
+        if self.cep:
 
-            self.street = address['logradouro']
-            self.neighborhood = address['bairro']
+            address = verify_cep(self.cep)
 
-            region = Region.objects.filter(name=address['estado']).first()
+            if address:
 
-            city_obj = None
+                self.street = address['logradouro']
+                self.neighborhood = address['bairro']
 
-            if region:
+                region = Region.objects.filter(name=address['estado']).first()
 
-                city_obj = SubRegion.objects.filter(name=address['localidade'], region=region).first()
+                if region:
 
-            else:
+                    city_obj = SubRegion.objects.filter(
+                        name=address['localidade'],
+                        region=region
+                    ).first()
+                    
+                else:
+                    
+                    city_obj = SubRegion.objects.filter(
+                        name=address['localidade']
+                    ).first()
 
-                city_obj = SubRegion.objects.filter(name=address['localidade']).first()
+                self.city = city_obj
+                self.state = region
 
-            self.city = city_obj
-            self.state = region
+        parts = [
+            self.street,
+            self.neighborhood,
+            self.complement,
+            str(self.city) if self.city else None,
+            str(self.state) if self.state else None,
+            self.cep
+        ]
 
-        self.full_address = f'{self.street or ""}, {self.neighborhood or ""}, {self.complement or ""}, {self.city or ""}, {self.state or ""} - {cep or ""}'.strip(', -')
+        self.full_address = ', '.join(filter(None, parts))
 
         super().save(*args, **kwargs)
-
-
 
     class Meta:
 

@@ -17,13 +17,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = [
 
-    '127.0.0.1',
-    'localhost',
-    'exponere.com.br'
+if not DEBUG:
 
-]
+    ALLOWED_HOSTS = [
+
+        '127.0.0.1',
+        'localhost',
+        'exponere.com.br'
+
+    ]
+
+else:
+
+    ALLOWED_HOSTS = [
+
+        '*'
+
+    ]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -53,18 +64,17 @@ INSTALLED_APPS = [
     'api.erp',
     'api.financial',
     'api.marketing',
+    'api.newsletter',
     'api.nf',
     'api.notification',
     'api.order',
     'api.payment',
     'api.product',
-    'api.qrcode',
     'api.wishlist',
-    'api.SEO',
     'api.shipping',
     'api.status',
     'api.stock',
-    #'api.subscription',
+    'api.subscription',
     'api.trend_marketing',
     
     'rest_framework',
@@ -134,6 +144,7 @@ if DEBUG:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+    
 
 else:
 
@@ -187,17 +198,39 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CORS_ALLOWED_ORIGINS = [
+if DEBUG:
 
-    'http://localhost:3000',
+    CORS_ALLOWED_ORIGINS = [
 
-]
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
 
-CSRF_TRUSTED_ORIGINS =  [
+        'https://4026-170-0-137-155.ngrok-free.app',
 
-    'http://localhost:3000',
+    ]
 
-]
+    CSRF_TRUSTED_ORIGINS =  [
+
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+
+        'https://4026-170-0-137-155.ngrok-free.app',
+
+    ]
+
+else:
+
+    CORS_ALLOWED_ORIGINS = [
+
+        'https://exponere.com.br',
+
+    ]
+
+    CSRF_TRUSTED_ORIGINS =  [
+
+        'https://exponere.com.br',
+
+    ]
 
 LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
@@ -303,6 +336,11 @@ else:
     STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_PROD_WEBHOOK_SECRET')
 
     SITE_URL = 'https://exponere.com.br'
+    
+STRIPE_PLAN_NECESSARIO=os.getenv('STRIPE_PLAN_NECESSARIO')
+STRIPE_PLAN_ALCANCE=os.getenv('STRIPE_PLAN_ALCANCE')
+STRIPE_PLAN_DESTAQUE=os.getenv('STRIPE_PLAN_DESTAQUE')
+STRIPE_PLAN_AUTORIDADE=os.getenv('STRIPE_PLAN_AUTORIDADE')
 
 ANYMAIL = {
     "MAILGUN_API_KEY": os.getenv('MAILGUN_API_KEY'),

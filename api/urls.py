@@ -6,7 +6,7 @@ urlpatterns = [
     path('blog/', include('api.blog.urls')),
     path('catalogs/', include('api.AI.urls')),
     path('catalogs/', include('api.catalog.urls')),
-    path('catalogs/', include('api.category.urls')),
+    path('', include('api.category.urls')),
     path('catalogs/', include('api.coupon.urls')),
     path('catalogs/', include('api.customer.urls')),
     path('catalogs/', include('api.analytic.urls')),

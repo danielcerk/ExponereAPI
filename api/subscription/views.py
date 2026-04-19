@@ -187,11 +187,19 @@ class CreateCheckoutSessionAPIView(APIView):
                 }
             )
 
-            if price_lookup_key == settings.STRIPE_LOCAL_PLAN_PREMIUM: # <- Esses aqui são as chaves de pesquisa dos planos, onde posso mudar de outros planos
+            if price_lookup_key == settings.STRIPE_PLAN_NECESSARIO: # <- Esses aqui são as chaves de pesquisa dos planos, onde posso mudar de outros planos
 
                 checkout_record.plan = get_object_or_404(Plan, lookup_key_plan=price_lookup_key)
 
-            elif price_lookup_key == settings.STRIPE_LOCAL_PLAN_PREMIUM_2:
+            elif price_lookup_key == settings.STRIPE_PLAN_ALCANCE:
+
+                checkout_record.plan = get_object_or_404(Plan, lookup_key_plan=price_lookup_key)
+
+            elif price_lookup_key == settings.STRIPE_PLAN_DESTAQUE:
+
+                checkout_record.plan = get_object_or_404(Plan, lookup_key_plan=price_lookup_key)
+
+            elif price_lookup_key == settings.STRIPE_PLAN_AUTORIDADE:
 
                 checkout_record.plan = get_object_or_404(Plan, lookup_key_plan=price_lookup_key)
 
@@ -357,11 +365,19 @@ class StripeWebhookAPIView(APIView):
 
             price_lookup_key = data_object['items']['data'][0]['price']['lookup_key']
 
-            if price_lookup_key == settings.STRIPE_LOCAL_PLAN_PREMIUM:
+            if price_lookup_key == settings.STRIPE_PLAN_NECESSARIO:
 
                 plan = Plan.objects.get(lookup_key_plan=price_lookup_key)
 
-            elif price_lookup_key == settings.STRIPE_LOCAL_PLAN_PREMIUM_2:
+            elif price_lookup_key == settings.STRIPE_PLAN_ALCANCE:
+
+                plan = Plan.objects.get(lookup_key_plan=price_lookup_key)
+
+            elif price_lookup_key == settings.STRIPE_PLAN_DESTAQUE:
+
+                plan = Plan.objects.get(lookup_key_plan=price_lookup_key)
+
+            elif price_lookup_key == settings.STRIPE_PLAN_AUTORIDADE:
 
                 plan = Plan.objects.get(lookup_key_plan=price_lookup_key)
 

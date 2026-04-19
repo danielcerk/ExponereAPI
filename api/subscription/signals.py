@@ -5,13 +5,15 @@ from api.auth.models import UserProfile
 
 from .models import CheckoutSessionRecord, Plan
 
+# Alterar o signals para receber apenas os planos quando se criar a conta
+
 @receiver(post_save, sender=UserProfile)
 def create_checkout_session_user(sender, instance, created, **kwargs):
     
     if created and not CheckoutSessionRecord.objects.filter(user=instance).exists():
 
         get_first_plan, _ = Plan.objects.get_or_create(
-            id=1, name='Free', price=0
+            name='Grátis', price=0
         )
 
         CheckoutSessionRecord.objects.create(

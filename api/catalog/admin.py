@@ -5,7 +5,6 @@ from .models import (
 
     Catalog, 
     Link, 
-    OpeningHours
 
 )
 
@@ -76,40 +75,6 @@ class CatalogAdmin(admin.ModelAdmin):
         
         return "—"
     banner_preview.short_description = "Banner"
-
-@admin.register(OpeningHours)
-class OpeningHoursAdmin(admin.ModelAdmin):
-
-    list_display = (
-        "catalog",
-        "weekday",
-        "open_time",
-        "close_time",
-        "is_closed",
-        "created_at",
-    )
-
-    list_filter = (
-        "weekday",
-        "is_closed",
-        "catalog",
-    )
-
-    search_fields = (
-        "catalog__name",
-        "catalog__user__username",
-    )
-
-    readonly_fields = (
-        "created_at",
-        "updated_at",
-    )
-
-    ordering = (
-        "catalog",
-        "weekday",
-        "open_time",
-    )
 
 @admin.register(Link)
 class LinkAdmin(admin.ModelAdmin):

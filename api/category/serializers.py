@@ -1,6 +1,10 @@
 from rest_framework import serializers
 from .models import Category, BusinessCategory, SubCategory
 
+from api.catalog.models import Catalog
+
+from django.shortcuts import get_object_or_404
+
 class BusinessCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -22,7 +26,10 @@ class BusinessCategorySerializer(serializers.ModelSerializer):
 
 class SubCategorySerializer(serializers.ModelSerializer):
 
+    category = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
+
         model = SubCategory
 
         fields = [
@@ -38,6 +45,7 @@ class SubCategorySerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "slug",
+            "category",
             "created_at",
             "updated_at",
         ]
@@ -45,20 +53,36 @@ class SubCategorySerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "id": {"required": False},
             "slug": {"required": False},
+            "category": {"required": False},
         }
 
-    def validate_name(self, value):
+    def create(self, validated_data):
 
-        if not value.strip():
-            raise serializers.ValidationError(
-                "O nome da subcategoria não pode estar vazio."
-            )
+        category_id = self.context["view"].kwargs.get("category_pk")
 
-        return value
+        category = get_object_or_404(Category, id=category_id)
+
+        subcategory = SubCategory.objects.create(
+            category=category,
+            **validated_data
+        )
+
+        return subcategory
+
+    def update(self, instance, validated_data):
+
+        for attr, value in validated_data.items():
+
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        return instance
+
 
     def validate(self, attrs):
 
-        category = attrs.get("category")
+        category = attrs.get("category") or self.context.get("category")
         name = attrs.get("name")
 
         if category and name:
@@ -82,12 +106,12 @@ class SubCategorySerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
 
     subcategories = SubCategorySerializer(
-        source="subcategory_set",
         many=True,
-        read_only=True
+        required=False
     )
 
     class Meta:
+
         model = Category
 
         fields = [
@@ -115,6 +139,29 @@ class CategorySerializer(serializers.ModelSerializer):
             "slug": {"required": False},
         }
 
+    def create(self, validated_data):
+
+        catalog_id = self.context["view"].kwargs.get("catalog_pk")
+
+        catalog = get_object_or_404(Catalog, id=catalog_id)
+
+        category = Category.objects.create(
+            catalog=catalog,
+            **validated_data
+        )
+
+        return category
+
+    def update(self, instance, validated_data):
+
+        for attr, value in validated_data.items():
+
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        return instance
+
     def validate_name(self, value):
 
         if not value.strip():
@@ -126,7 +173,12 @@ class CategorySerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
 
-        catalog = attrs.get("catalog")
+        catalog = (
+            getattr(self.instance, "catalog", None)
+            or self.context.get("catalog")
+            or getattr(self.context.get("view"), "kwargs", {}).get("catalog_pk")
+        )
+
         name = attrs.get("name")
 
         if catalog and name:
@@ -140,8 +192,10 @@ class CategorySerializer(serializers.ModelSerializer):
                 qs = qs.exclude(pk=self.instance.pk)
 
             if qs.exists():
-                raise serializers.ValidationError(
-                    {"name": "Já existe uma categoria com esse nome neste catálogo."}
-                )
+                raise serializers.ValidationError({
+                    "name": "Já existe uma categoria com esse nome neste catálogo."
+                })
 
         return attrs
+    
+

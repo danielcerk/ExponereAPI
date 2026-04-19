@@ -1,12 +1,15 @@
 from django.db import models
-
-import re
+from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
-
 from django.utils.text import slugify
 
+from api.utils import validate_not_empty_url
 from api.category.models import BusinessCategory
+
+import re
+
+from decimal import Decimal
 
 User = get_user_model()
 
@@ -43,6 +46,7 @@ class Catalog(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
+        validators=[MinValueValidator(Decimal("0.01"))],
         verbose_name="Valor mínimo por pedido"
     )
 
@@ -51,6 +55,7 @@ class Catalog(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
+        validators=[MinValueValidator(Decimal("0.01"))],
         verbose_name="Valor mínimo por pedido para frete grátis"
     )
 
@@ -87,63 +92,6 @@ class Catalog(models.Model):
 
         return f'Catálogo de {self.user.username}'
     
-class OpeningHours(models.Model):
-
-    WEEKDAY_CHOICES = (
-        (0, "Segunda-feira"),
-        (1, "Terça-feira"),
-        (2, "Quarta-feira"),
-        (3, "Quinta-feira"),
-        (4, "Sexta-feira"),
-        (5, "Sábado"),
-        (6, "Domingo"),
-    )
-
-    catalog = models.ForeignKey(
-        "Catalog",
-        on_delete=models.CASCADE,
-        related_name="opening_hours",
-        verbose_name="Catálogo"
-    )
-
-    weekday = models.IntegerField(
-        choices=WEEKDAY_CHOICES,
-        verbose_name="Dia da semana"
-    )
-
-    open_time = models.TimeField(
-        verbose_name="Abre às",
-        null=True,
-        blank=True
-    )
-
-    close_time = models.TimeField(
-        verbose_name="Fecha às",
-        null=True,
-        blank=True
-    )
-
-    is_closed = models.BooleanField(
-        default=False,
-        verbose_name="Fechado neste dia"
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-
-        verbose_name = "Horário de funcionamento"
-        verbose_name_plural = "Horários de funcionamento"
-
-        ordering = ["weekday", "open_time"]
-        
-        unique_together = ("catalog", "weekday", "open_time")
-
-    def __str__(self):
-
-        return f"{self.catalog} - {self.get_weekday_display()}"
-    
 class Link(models.Model):
 
     SOCIAL_CHOICES = (
@@ -164,7 +112,13 @@ class Link(models.Model):
         related_name='links'
     )
 
-    url = models.URLField("Link da rede social", null=True, blank=True)
+    url = models.URLField(
+        "Link da rede social",
+        default='https://exponere.com.br',
+        null=False,
+        blank=False,
+        validators=[validate_not_empty_url]
+    )
 
     social_name = models.CharField(
         max_length=20,

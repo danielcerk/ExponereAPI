@@ -1,20 +1,23 @@
 from rest_framework import serializers
-
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.validators import UniqueValidator
 
 from django.contrib.auth import get_user_model
-
-from .models import Profile
-
+from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import make_password
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django.contrib.auth import authenticate
+from django.conf import settings
+
+from .models import Profile
 
 from api.address.serializers import AddressSerializer
 
+from cities_light.models import SubRegion, Region
 
 User = get_user_model()
+
+DEBUG = settings.DEBUG
 
 class ResetPasswordRequestSerializer(serializers.Serializer):
 
@@ -23,7 +26,7 @@ class ResetPasswordRequestSerializer(serializers.Serializer):
 class ResetPasswordSerializer(serializers.Serializer):
 
     new_password = serializers.RegexField(
-        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$',
+        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$',
         write_only=True,
         error_messages={
             "invalid": "Password must be at least 8 characters long with at least one capital letter and one symbol."
@@ -99,7 +102,19 @@ class RegisterSerializer(serializers.ModelSerializer):
         validators=[UniqueValidator(queryset=User.objects.all())]
     )
 
-    password = serializers.CharField(write_only=True, required=True)
+    if not DEBUG:
+
+        password = serializers.RegexField(
+            regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$',
+            write_only=True,
+            error_messages={
+                "invalid": "Password must be at least 8 characters long with at least one capital letter and one symbol."
+            }
+        )
+
+    else:
+
+        password = serializers.CharField(write_only=True, required=True)
 
     role = serializers.ChoiceField(
         choices=User.ROLE_CHOICES,
@@ -171,7 +186,6 @@ class RegisterSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
 
     address = AddressSerializer(required=False)
-
     class Meta:
         
         model = Profile
@@ -186,7 +200,31 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
 
+        address_data = validated_data.pop('address', None)
+
         instance = super().update(instance, validated_data)
+
+        if address_data:
+
+            if instance.address:
+
+                addr_serializer = AddressSerializer(
+                    instance.address,
+                    data=address_data,
+                    partial=True
+                )
+
+                addr_serializer.is_valid(raise_exception=True)
+                addr_serializer.save()
+
+            else:
+
+                addr_serializer = AddressSerializer(data=address_data)
+                addr_serializer.is_valid(raise_exception=True)
+                addr_instance = addr_serializer.save()
+                
+                instance.address = addr_instance
+                instance.save(update_fields=['address'])
 
         return instance
     

@@ -18,7 +18,6 @@ def create_catalog_user(sender, instance, created, **kwargs):
         instance.catalog = catalog
         instance.owner = instance
 
-        # evita loop desnecessário
         UserProfile.objects.filter(pk=instance.pk).update(
             catalog=catalog,
             owner=instance

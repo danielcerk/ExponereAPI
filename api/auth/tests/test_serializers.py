@@ -2,6 +2,8 @@ from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
 from api.auth.serializers import RegisterSerializer, ProfileSerializer, AccountSerializer
 
+from rest_framework.exceptions import ValidationError
+
 User = get_user_model()
 
 class RegisterSerializerTest(APITestCase):
@@ -9,9 +11,9 @@ class RegisterSerializerTest(APITestCase):
     def test_create_user_success(self):
 
         data = {
-            'name': 'Daniel',
+            'username': 'Daniel',
             'email': 'daniel@example.com',
-            'password': 'strongpassword123',
+            'password': '$Trongpassword123',
             'terms_of_use_is_ready': True
         }
 
@@ -21,14 +23,14 @@ class RegisterSerializerTest(APITestCase):
 
         user = serializer.save()
 
-        self.assertEqual(user.name, 'Daniel')
-        self.assertTrue(user.check_password('strongpassword123'))
+        self.assertEqual(user.username, 'Daniel')
+        self.assertTrue(user.check_password('$Trongpassword123'))
         self.assertEqual(user.email, 'daniel@example.com')
 
     def test_create_user_without_email_fails(self):
 
         data = {
-            'name': 'Daniel',
+            'username': 'Daniel',
             'password': 'strongpassword123',
             'terms_of_use_is_ready': True
         }
@@ -42,7 +44,7 @@ class ProfileSerializerTest(APITestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            name='Daniel',
+            username='Daniel',
             email='daniel@example.com',
             password='password',
             terms_of_use_is_ready=True
@@ -64,17 +66,17 @@ class AccountSerializerTest(APITestCase):
     def setUp(self):
 
         self.user = User.objects.create_user(
-            name='Daniel',
+            username='Daniel',
             email='daniel@gmaile.com',
             password='1234',
             terms_of_use_is_ready=True
         )
 
-    def test_update_name_and_password(self):
+    def test_update_username_and_password(self):
 
         serializer = AccountSerializer(
             self.user, 
-            data={'name': 'Dan', 'password': '123'}, 
+            data={'username': 'Dan', 'password': '123'}, 
             partial=True,
             context={'request': self.client}
         )
@@ -83,13 +85,16 @@ class AccountSerializerTest(APITestCase):
         
         user = serializer.save()
 
-        self.assertEqual(user.name, 'Dan')
+        self.assertEqual(user.username, 'Dan')
 
         self.assertTrue(user.check_password('123'))
 
-    def test_update_profile_field(self):
+    def test_update_profile_invalid_wpp(self):
 
-        profile_data = {'whatsapp': '+5511999999999'}
+        profile_data = {
+            'whatsapp': '+5511999999999'
+        }
+
         serializer = AccountSerializer(
             self.user,
             data={'profile': profile_data},
@@ -97,8 +102,9 @@ class AccountSerializerTest(APITestCase):
             context={'request': self.client}
         )
 
-        self.assertTrue(serializer.is_valid(), serializer.errors)
+        with self.assertRaises(ValidationError) as context:
 
-        user = serializer.save()
+            serializer.is_valid(raise_exception=True)
 
-        self.assertEqual(user.profile.whatsapp, '+5511999999999')
+        self.assertIn('profile', context.exception.detail)
+        self.assertIn('whatsapp', context.exception.detail['profile'])

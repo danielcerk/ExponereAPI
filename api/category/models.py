@@ -6,6 +6,7 @@ class BusinessCategory(models.Model):
     name = models.CharField(
 
         verbose_name='Categoria da Empresa', max_length=155,
+        null=False, blank=False
 
     )
 
@@ -39,6 +40,11 @@ class BusinessCategory(models.Model):
     def __str__(self):
 
         return self.name
+    
+    class Meta:
+
+        verbose_name = 'Categoria do Negócio'
+        verbose_name_plural = 'Categorias dos Negócios'
 
 class Category(models.Model):
 
@@ -51,6 +57,7 @@ class Category(models.Model):
     name = models.CharField(
         verbose_name="Nome",
         max_length=255,
+        null=False, blank=False
     )
 
     slug = models.SlugField(
@@ -108,12 +115,14 @@ class SubCategory(models.Model):
         on_delete=models.CASCADE,
         related_name="subcategories",
         verbose_name="Categoria",
+        null=True
     )
 
 
     name = models.CharField(
         verbose_name="Nome",
         max_length=255,
+        null=False, blank=False
     )
 
     slug = models.SlugField(

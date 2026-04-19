@@ -65,3 +65,9 @@ def validate_no_repeated_chars(value):
     else:
         
         raise ValidationError('Documento deve ser CPF ou CNPJ válido.')
+    
+def validate_not_empty_url(value):
+
+    if not value or not str(value).strip():
+        
+        raise ValidationError("Informe uma URL válida.")

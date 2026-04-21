@@ -44,7 +44,12 @@ from .serializers import (
 )
 
 
+
 from datetime import timedelta
+
+from django_otp.plugins.otp_totp.models import TOTPDevice
+from rest_framework.decorators import api_view, permission_classes, action
+
 
 from api.notification.tasks import (
     send_password_reset_email_task,
@@ -103,6 +108,7 @@ class AccountViewSet(ModelViewSet):
 
     def get_queryset(self):
 
+
         return User.objects.filter(id=self.request.user.pk)
     
     @action(detail=False, methods=['get', 'put', 'patch', 'delete'])
@@ -125,6 +131,14 @@ class AccountViewSet(ModelViewSet):
         if request.method == 'DELETE':
             user.delete()
             return Response(status=204)
+
+        return User.objects.all().order_by('-created_at')
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def me(self, request):
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
+
 
 class LogoutAPIView(APIView):
 

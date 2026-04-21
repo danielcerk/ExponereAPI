@@ -22,8 +22,10 @@ class APIKeyMiddleware:
 
 
         if any(request.path.startswith(p) for p in public_paths):
-
             return self.get_response(request)
+        
+        if request.method == 'OPTIONS':
+             return self.get_response(request)
 
         api_key = request.headers.get('X-API-Key')
 

@@ -146,7 +146,7 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     def save(self, *args, **kwargs):
-
+        
         self.full_name = f"{self.first_name or ''} {self.last_name or ''}".strip()
 
         if not self.catalog and self.owner:
@@ -157,6 +157,7 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.email} ({self.role})"
+
 
     class Meta:
 

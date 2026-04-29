@@ -72,6 +72,12 @@ class LinkSerializer(serializers.ModelSerializer):
         return instance
 
 
+# Puxar:
+
+# - Endereço
+# - CPF/CNPJ
+# - Whatsapp
+
 class CatalogSerializer(serializers.ModelSerializer):
 
     links = LinkSerializer(many=True, required=False)
@@ -81,6 +87,21 @@ class CatalogSerializer(serializers.ModelSerializer):
 
     business_category_name = serializers.CharField(
         source="business_category.name",
+        read_only=True
+    )
+
+    owner_address = serializers.CharField(
+        source='user.profile.address',
+        read_only=True
+    )
+
+    owner_whatsapp = serializers.CharField(
+        source='user.profile.whatsapp',
+        read_only=True
+    )
+
+    owner_cpf_cnpj = serializers.CharField(
+        source='user.profile.cpf_cnpj',
         read_only=True
     )
     class Meta:
@@ -98,6 +119,9 @@ class CatalogSerializer(serializers.ModelSerializer):
             "business_category",
             "business_category_name",
             "about",
+            "owner_address",
+            "owner_cpf_cnpj",
+            "owner_whatsapp",
             "links",
             "created_at",
             "updated_at",

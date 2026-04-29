@@ -133,7 +133,7 @@ class ProductLogisticInfo(models.Model):
         UNIT = "unit", "Unidade"
         OTHER = "other", "Outro"
 
-    product = models.ForeignKey(
+    product = models.OneToOneField(
         Product,
         on_delete=models.CASCADE,
         related_name="logistic_info",
@@ -266,12 +266,6 @@ class Image(models.Model):
 
     )
 
-    is_main = models.BooleanField(
-        verbose_name='Imagem principal',
-        default=False,
-        help_text='Define se esta é a imagem principal do anúncio.'
-    )
-
     created_at = models.DateTimeField(
         verbose_name='Criado em',
         auto_now_add=True
@@ -289,7 +283,6 @@ class Image(models.Model):
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['product']),
-            models.Index(fields=['is_main']),
             models.Index(fields=['created_at']),
         ]
 
@@ -310,8 +303,7 @@ class Image(models.Model):
         if not self.alt_text:
 
             self.alt_text = (
-                f'Foto de {self.product.title} da {self.product.catalog.name} '
-                f'localizado(a) em {self.product.catalog.user.address}'
+                f'Foto de {self.product.title} da {self.product.catalog.name}'
             )
 
         super().save(*args, **kwargs)

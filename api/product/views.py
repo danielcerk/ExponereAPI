@@ -24,6 +24,10 @@ class IsCatalogOwnerOrRead(BasePermission):
 
             return True
 
+        if not request.user or not request.user.is_authenticated:
+
+            return False
+
         catalog_id = view.kwargs.get("catalog_pk")
 
         if not catalog_id:
@@ -43,22 +47,34 @@ class IsCatalogOwnerOrRead(BasePermission):
         return obj.catalog.user == request.user
     
 class ProductViewSet(ModelViewSet):
-
+    
     permission_classes = [IsCatalogOwnerOrRead]
     serializer_class = ProductSerializer
 
     def get_queryset(self):
 
+        product_id = self.kwargs.get("pk")
         catalog_id = self.kwargs.get("catalog_pk")
 
         if not catalog_id:
 
             return Product.objects.none()
 
-        return Product.objects.filter(
-            catalog_id=catalog_id,
-            catalog__user=self.request.user
-        )
+        queryset = Product.objects.filter(catalog_id=catalog_id)
+
+        if self.request.user.is_authenticated:
+
+            queryset = queryset.filter(
+
+                catalog__user=self.request.user
+
+            )
+
+        if product_id:
+
+            queryset = queryset.filter(pk=product_id)
+
+        return queryset
     
     def perform_destroy(self, instance):
 

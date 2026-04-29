@@ -12,13 +12,15 @@ jobs:
         env:
 
           API_KEY: ${{ secrets.API_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }} # ATualizar
+          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }} # Atualizar
           GOOGLE_OAUTH_CALLBACK_URL: ${{ secrets.GOOGLE_OAUTH_CALLBACK_URL }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
           GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
 
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
+
+          # Atualizar também
 
           STRIPE_TEST_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
           STRIPE_TEST_PUBLIC_KEY: ${{ secrets.STRIPE_TEST_PUBLIC_KEY }}
@@ -34,9 +36,40 @@ jobs:
           STRIPE_LOCAL_PLAN_PREMIUM: ${{ secrets.STRIPE_LOCAL_PLAN_PREMIUM }}
           STRIPE_LOCAL_PLAN_PREMIUM_2: ${{ secrets.STRIPE_LOCAL_PLAN_PREMIUM_2 }}
 
+          # Deve atualizar
+
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+
+          # Criados recentemente
+
+          MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
+          MAILGUN_SENDER_DOMAIN: ${{ secrets.MAILGUN_SENDER_DOMAIN }}
+          MAILGUN_WELCOME_EMAIL_TEMPLATE: ${{ secrets.MAILGUN_WELCOME_EMAIL_TEMPLATE }}
+          MAILGUN_PASSWORD_RESET_EMAIL_TEMPLATE: ${{ secrets.MAILGUN_PASSWORD_RESET_EMAIL_TEMPLATE }}
+          MAILGUN_CONFIRMATION_EMAIL_TEMPLATE: ${{ secrets.MAILGUN_CONFIRMATION_EMAIL_TEMPLATE }}
+          MAILGUN_REMINDER_PRODUCT_EMAIL_TEMPLATE: ${{ secrets.MAILGUN_REMINDER_PRODUCT_EMAIL_TEMPLATE }}
+
+          STRAPI_API_KEY: ${{ secrets.STRAPI_API_KEY }}
+          STRAPI_ARTICLE_URL: ${{ secrets.STRAPI_ARTICLE_URL }}
+          STRAPI_CATEGORY_URL: ${{ secrets.STRAPI_CATEGORY_URL }}
+
+          PROPERTY_ID_GA4: ${{ secrets.PROPERTY_ID_GA4 }}
+
+          GA4_CREDENTIALS: ${{ secrets.GA4_CREDENTIALS }}
+
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+          CELERY_BROKER_URL_TEST: ${{ secrets.CELERY_BROKER_URL_TEST }}
+          CELERY_RESULT_BACKEND_TEST: ${{ secrets.CELERY_RESULT_BACKEND_TEST }}
+
+          CELERY_BROKER_URL_PROD: ${{ secrets.CELERY_BROKER_URL_PROD }}
+          CELERY_RESULT_BACKEND_PROD: ${{ secrets.CELERY_RESULT_BACKEND_PROD }}
+
+          MELHOR_ENVIO_CLIENT_ID: ${{ secrets.MELHOR_ENVIO_CLIENT_ID }}
+          MELHOR_ENVIO_CLIENT_SECRET: ${{ secrets.MELHOR_ENVIO_CLIENT_SECRET }}
+          MELHOR_ENVIO_ACCESS_TOKEN: ${{ secrets.MELHOR_ENVIO_ACCESS_TOKEN }}
           
         steps:
             - name: Checkout Repository

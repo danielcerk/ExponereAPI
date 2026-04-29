@@ -28,14 +28,14 @@ class WishlistSerializer(serializers.ModelSerializer):
         read_only_fields = (
             "id",
             "session_key",
+            "is_active",
             "created_at",
             "updated_at",
         )
-
+        
         extra_kwargs = {
 
             'id': {'required': False},
-            'is_active': {'required': False}
 
         }
 
@@ -52,15 +52,13 @@ class WishlistSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        request = self.context.get('request')
 
-        session_key = attrs.get("session_key")
+        session = request.session
 
-        if not session_key:
+        if not session.session_key:
+            session.save()
 
-            raise serializers.ValidationError(
-
-                "ession_key must be provided."
-
-            )
+        attrs['session_key'] = session.session_key
 
         return attrs

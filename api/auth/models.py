@@ -199,7 +199,6 @@ class Profile(models.Model):
                 regex=r'^\+?55\d{10,11}$',
                 message='Digite um número válido com DDD (ex: +5511999999999)'
             ),
-            validate_no_repeated_chars
         ],
         null=True,
         blank=True

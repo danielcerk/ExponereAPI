@@ -79,6 +79,13 @@ jobs:
                 python -m pip install --upgrade pip
                 pip install -r requirements.txt
 
+            - name: Migrate
+              run: |
+                python -m manage.py makemigrations
+                python -m manage.py migrate
+
+                python -m manage.py cities_light
+
             - name: Run Tests
               run: |
                 python manage.py test --noinput

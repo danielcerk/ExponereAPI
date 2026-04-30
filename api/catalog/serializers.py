@@ -71,13 +71,6 @@ class LinkSerializer(serializers.ModelSerializer):
 
         return instance
 
-
-# Puxar:
-
-# - Endereço
-# - CPF/CNPJ
-# - Whatsapp
-
 class CatalogSerializer(serializers.ModelSerializer):
 
     links = LinkSerializer(many=True, required=False)
@@ -110,6 +103,7 @@ class CatalogSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "name",
+            "slug",
             "photo_img",
             "banner_img",
             "photo_file",

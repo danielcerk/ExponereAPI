@@ -12,6 +12,6 @@ def create_analytic_catalog_user(sender, instance, created, **kwargs):
 
         analytic_catalog_route = AnalyticRoute.objects.create(
 
-            catalog=instance, route=instance.slug
+            catalog=instance, slug=instance.slug
             
         )

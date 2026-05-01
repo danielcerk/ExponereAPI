@@ -76,7 +76,7 @@ class ProductOrderAdmin(admin.ModelAdmin):
 
     search_fields = (
         'order__id',
-        'wishlist_product__product__name',
+        'wishlist_product__product__title',
     )
 
     autocomplete_fields = [

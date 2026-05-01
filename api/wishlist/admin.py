@@ -27,7 +27,7 @@ class WishlistAdmin(admin.ModelAdmin):
 	)
 
 	search_fields = (
-		"product__name",
+		"product__title",
 		"session_key",
 	)
 

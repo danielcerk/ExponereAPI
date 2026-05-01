@@ -10,7 +10,7 @@ from api.order.models import Order, ProductOrder
 
 def get_catalog(id):
     
-    return get_object_or_404(Catalog, pk=id)
+    return get_object_or_404(Catalog, user__pk=id)
 
 
 def apply_date_filter(qs, start_date=None, end_date=None, days=None):
@@ -83,7 +83,7 @@ def best_selling_product(id, **filters):
 
     return qs.values(
         'wishlist_product__product__id',
-        'wishlist_product__product__name'
+        'wishlist_product__product__title'
     ).annotate(
 
         total_sold=Sum('wishlist_product__quantity')
@@ -104,7 +104,7 @@ def worst_selling_product(id, **filters):
 
     return qs.values(
         'wishlist_product__product__id',
-        'wishlist_product__product__name'
+        'wishlist_product__product__title'
     ).annotate(
 
         total_sold=Sum('wishlist_product__quantity')

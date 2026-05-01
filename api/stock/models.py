@@ -266,7 +266,7 @@ class AlertProductStock(models.Model):
         ]
 
     def __str__(self):
-        return f'Alerta de estoque: {self.product.name} - {self.email}'
+        return f'Alerta de estoque: {self.product.title} - {self.email}'
 
     def deactivate(self):
 

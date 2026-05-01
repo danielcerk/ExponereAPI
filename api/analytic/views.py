@@ -18,7 +18,7 @@ class IsOwner(BasePermission):
 
     def has_object_permission(self, request, view, obj):
 
-        return obj.catalog.user == request.user
+        return obj.user == request.user
 
 class AnalyticView(APIView):
     

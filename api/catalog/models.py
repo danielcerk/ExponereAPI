@@ -75,7 +75,7 @@ class Catalog(models.Model):
 
     def save(self, *args, **kwargs):
 
-        if self.name:
+        if not self.slug and self.name:
 
             base_slug = slugify(self.name)
             slug = base_slug

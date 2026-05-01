@@ -143,7 +143,6 @@ class ProductLogisticInfoModelTest(TestCase):
                 product=self.product
             )
 
-
 class ImageModelTest(TestCase):
 
     def setUp(self):

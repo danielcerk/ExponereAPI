@@ -131,7 +131,7 @@ class AlertProductStockAdmin(admin.ModelAdmin):
 
     search_fields = (
         'email',
-        'product__name',
+        'product__title',
     )
 
     readonly_fields = (

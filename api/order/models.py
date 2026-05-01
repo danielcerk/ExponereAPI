@@ -16,7 +16,7 @@ class Order(models.Model):
         verbose_name="Catalogo",
     )
 
-    customer = models.ForeignKey(
+    customer = models.OneToOneField(
         Customer,
         on_delete=models.CASCADE,
         verbose_name="Cliente",

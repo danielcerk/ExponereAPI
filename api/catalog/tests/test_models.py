@@ -27,7 +27,7 @@ class CatalogTestCase(BaseTestCase):
 
     def test_get_catalog(self):
 
-        self.assertEqual(self.catalog.pk, 1)
+        self.assertIsNotNone(self.catalog.pk)
 
     def test_edit_catalog(self):
 

@@ -84,8 +84,6 @@ jobs:
                 python manage.py makemigrations
                 python manage.py migrate
 
-                python manage.py cities_light
-
             - name: Run Tests
               run: |
                 python manage.py test --noinput

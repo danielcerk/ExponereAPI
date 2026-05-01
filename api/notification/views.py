@@ -17,11 +17,11 @@ from rest_framework.permissions import (
 
 class IsCatalogOwner(BasePermission):
 
-    def has_object_permission(self, request, view, obj):
-
-        return obj.catalog.user == request.user
-
     def has_permission(self, request, view):
+
+        if not request.user or not request.user.is_authenticated:
+            
+            return False
 
         catalog_id = view.kwargs.get("catalog_pk")
 
@@ -29,9 +29,17 @@ class IsCatalogOwner(BasePermission):
 
             return False
 
-        catalog = get_object_or_404(Catalog, pk=catalog_id)
+        catalog = Catalog.objects.filter(pk=catalog_id).first()
+
+        if not catalog:
+
+            return False
 
         return catalog.user == request.user
+
+    def has_object_permission(self, request, view, obj):
+
+        return obj.catalog.user == request.user
     
 class NotificationViewSet(
     mixins.RetrieveModelMixin,

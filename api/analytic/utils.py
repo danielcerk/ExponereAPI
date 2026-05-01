@@ -5,12 +5,12 @@ from datetime import timedelta
 
 from api.catalog.models import Catalog
 
-from api.wishlist.models import Wishlist # catalogo x session_key
+from api.wishlist.models import Wishlist
 from api.customer.models import Customer
 
 def get_catalog(id):
     
-    return get_object_or_404(Catalog, pk=id)
+    return get_object_or_404(Catalog, user__pk=id)
 
 def apply_date_filter(qs, start_date=None, end_date=None, days=None):
 

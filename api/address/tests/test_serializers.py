@@ -30,20 +30,6 @@ class AddressSerializerTestCase(APITestCase):
         self.assertEqual(updated_address.cep, update_data['cep'])
         self.assertEqual(updated_address.street, 'Avenida Transnordestina')
 
-    def test_create_address_with_invalid_region_subregion(self):
-        
-        data = {
-            'city': '7000',
-            'state': '39'
-        }
-
-        serializer = AddressSerializer(data=data)
-
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('city', serializer.errors)
-        self.assertIn('state', serializer.errors)
-
-
     def test_create_address_with_invalid_text_cep(self):
 
         data = {

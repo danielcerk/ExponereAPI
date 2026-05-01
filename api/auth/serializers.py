@@ -13,8 +13,6 @@ from .models import Profile
 
 from api.address.serializers import AddressSerializer
 
-from cities_light.models import SubRegion, Region
-
 User = get_user_model()
 
 DEBUG = settings.DEBUG
@@ -239,8 +237,8 @@ class AccountSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'username', 
-            'first_name', 'last_name',
-            'email','password', 'profile'
+            'first_name', 'last_name', 'full_name',
+            'email','password', 'profile', 'role', 'catalog'
         )
 
         read_only_fields = (

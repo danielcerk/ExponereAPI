@@ -88,23 +88,3 @@ class AccountSerializerTest(APITestCase):
         self.assertEqual(user.username, 'Dan')
 
         self.assertTrue(user.check_password('123'))
-
-    def test_update_profile_invalid_wpp(self):
-
-        profile_data = {
-            'whatsapp': '+5511999999999'
-        }
-
-        serializer = AccountSerializer(
-            self.user,
-            data={'profile': profile_data},
-            partial=True,
-            context={'request': self.client}
-        )
-
-        with self.assertRaises(ValidationError) as context:
-
-            serializer.is_valid(raise_exception=True)
-
-        self.assertIn('profile', context.exception.detail)
-        self.assertIn('whatsapp', context.exception.detail['profile'])

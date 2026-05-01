@@ -24,9 +24,9 @@ class AnalyticView(APIView):
     
     permission_classes = [IsOwner]
 
-    def get(self, request, catalog_id):
+    def get(self, request):
 
-        catalog = get_catalog(catalog_id)
+        catalog = get_catalog(self.request.user.pk)
 
         self.check_object_permissions(request, catalog)
 

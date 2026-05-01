@@ -93,40 +93,34 @@ class ImageSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
 
-    product_logistic_info = ProductLogisticInfoSerializer(
-        source='logistic_info',
+    logistic_info = ProductLogisticInfoSerializer(
         required=False,
-        read_only=True
     )
 
-    stock = StockSerializer(
-        source='stocks',
+    stocks = StockSerializer(
         required=False,
-        read_only=True
     )
 
     category = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Category.objects.all(),
-        source="category.name",
         required=False
     )
 
     subcategory = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=SubCategory.objects.all(),
-        source="subcategory.name",
         required=False
     )
 
-    images = ImageSerializer(many=True, read_only=True)
+    images = ImageSerializer(many=True)
 
     class Meta:
         
         model = Product
         fields = '__all__'
         read_only_fields = (
-            'id', 'slug', 'catalog', 'created_at', 'updated_at'
+            'id', 'slug', 'catalog', 'is_active', 'created_at', 'updated_at'
         )
 
     def validate(self, data):
@@ -149,10 +143,11 @@ class ProductSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context.get('request')
 
-        logistic_data = validated_data.pop('product_logistic_info', None)
-        stock_data = validated_data.pop('stock', None)
+        logistic_data = validated_data.pop('logistic_info', None)
+        stock_data = validated_data.pop('stocks', None)
         categories = validated_data.pop('category', [])
         subcategories = validated_data.pop('subcategory', [])
+        images_data = validated_data.pop('images', [])
 
         catalog = get_object_or_404(Catalog, user=request.user)
 
@@ -162,22 +157,18 @@ class ProductSerializer(serializers.ModelSerializer):
         )
 
         if categories:
-
             product.category.set(categories)
 
         if subcategories:
-
             product.subcategory.set(subcategories)
 
         if logistic_data:
-
             ProductLogisticInfo.objects.create(
                 product=product,
                 **logistic_data
             )
 
         if stock_data:
-
             movement_data = stock_data.pop('movement', None)
 
             stock = Stock.objects.create(
@@ -186,15 +177,22 @@ class ProductSerializer(serializers.ModelSerializer):
             )
 
             if movement_data:
-
                 StockMovement.objects.create(
                     stock=stock,
                     **movement_data
                 )
 
+        for image_data in images_data:
+
+            Image.objects.create(
+                product=product,
+                **image_data
+            )
+
         images_files = request.FILES.getlist('images')
 
         for image in images_files:
+
             ImageSerializer().create({
                 "product": product,
                 "image_upload": image
@@ -205,13 +203,13 @@ class ProductSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-
         request = self.context.get('request')
 
-        logistic_data = validated_data.pop('product_logistic_info', None)
-        stock_data = validated_data.pop('stock', None)
+        logistic_data = validated_data.pop('logistic_info', None)
+        stock_data = validated_data.pop('stocks', None)
         categories = validated_data.pop('category', None)
         subcategories = validated_data.pop('subcategory', None)
+        images_data = validated_data.pop('images', None)
 
         for attr, value in validated_data.items():
 
@@ -258,7 +256,7 @@ class ProductSerializer(serializers.ModelSerializer):
                     **movement_data
                 )
 
-        keep_ids = request.data.getlist('keep_images', None)
+        keep_ids = request.data.get('keep_images', None)
 
         if keep_ids is not None:
 
@@ -269,6 +267,15 @@ class ProductSerializer(serializers.ModelSerializer):
             else:
 
                 instance.images.all().delete()
+
+        if images_data:
+
+            for image_data in images_data:
+
+                Image.objects.create(
+                    product=instance,
+                    **image_data
+                )
 
         images_files = request.FILES.getlist('images')
 

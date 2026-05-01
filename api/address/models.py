@@ -1,11 +1,16 @@
 from django.db import models
 
-from cities_light.models import SubRegion, Region
-
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 
-from .utils import verify_cep, validate_no_repeated_digits
+from .utils import ( 
+    
+    verify_cep, 
+    validate_no_repeated_digits,
+    get_cities,
+    get_states
+
+)
 
 class Address(models.Model):
 
@@ -40,18 +45,20 @@ class Address(models.Model):
         verbose_name='Complemento'
     )
 
-    city = models.ForeignKey(
-        SubRegion,
-        on_delete=models.SET_NULL,
-        null=True, blank=True,
-        verbose_name='Cidade'
+    city = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name="Cidade",
+        choices=get_cities()
     )
 
-    state = models.ForeignKey(
-        Region,
-        on_delete=models.SET_NULL,
-        null=True, blank=True,
-        verbose_name='Estado'
+    state = models.CharField(
+        max_length=2,
+        null=True,
+        blank=True,
+        verbose_name="UF",
+        choices=get_states()
     )
 
     full_address = models.CharField(
@@ -80,37 +87,31 @@ class Address(models.Model):
 
             if address:
 
-                self.street = address['logradouro']
-                self.neighborhood = address['bairro']
+                self.street = address.get("logradouro")
+                self.neighborhood = address.get("bairro")
 
-                region = Region.objects.filter(name=address['estado']).first()
+                city_obj = get_cities(name=address.get("localidade"))
 
-                if region:
+                if city_obj:
 
-                    city_obj = SubRegion.objects.filter(
-                        name=address['localidade'],
-                        region=region
-                    ).first()
+                    self.city = city_obj["Nome"]
+
+                state_obj = get_states(UF=address.get("uf"))
+
+                if state_obj:
                     
-                else:
-                    
-                    city_obj = SubRegion.objects.filter(
-                        name=address['localidade']
-                    ).first()
-
-                self.city = city_obj
-                self.state = region
+                    self.state = state_obj["Uf"]
 
         parts = [
             self.street,
             self.neighborhood,
             self.complement,
-            str(self.city) if self.city else None,
-            str(self.state) if self.state else None,
+            self.city,
+            self.state,
             self.cep
         ]
 
-        self.full_address = ', '.join(filter(None, parts))
+        self.full_address = ", ".join(filter(None, parts))
 
         super().save(*args, **kwargs)
 

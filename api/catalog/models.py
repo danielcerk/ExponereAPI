@@ -20,7 +20,7 @@ class Catalog(models.Model):
     name = models.CharField(
 
         verbose_name='Nome da empresa', max_length=155,
-        null=True, blank=True
+        null=True, blank=True, default='catalogo'
 
     )
 
@@ -75,14 +75,14 @@ class Catalog(models.Model):
 
     def save(self, *args, **kwargs):
 
-        if not self.slug and self.name:
+        if self.name:
 
             base_slug = slugify(self.name)
             slug = base_slug
 
             while Catalog.objects.filter(slug=slug).exclude(pk=self.pk).exists():
 
-                slug = f"{base_slug}-{slugify(self.user.address)}"
+                slug = f"{base_slug}-{slugify(self.user.username)}"
 
             self.slug = slug
 

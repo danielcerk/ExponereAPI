@@ -53,15 +53,19 @@ from api.notification.tasks import (
 
 User = get_user_model()
 
-class IsOwnerOrReadOnly(BasePermission):
-    
+class IsOwner(BasePermission):
+
+    def has_permission(self, request, view):
+
+        return request.user and request.user.is_authenticated
+
     def has_object_permission(self, request, view, obj):
 
         if request.method in SAFE_METHODS:
 
             return True
 
-        return obj.pk == request.user.pk
+        return obj.pk == request.user.pkk
 
 class MyTokenObtainPairView(TokenObtainPairView):
 
@@ -99,7 +103,7 @@ class AccountViewSet(ModelViewSet):
 
     parser_classes = (MultiPartParser, FormParser)
     serializer_class = AccountSerializer
-    permission_classes = [IsOwnerOrReadOnly]
+    permission_classes = [IsOwner]
 
     def get_queryset(self):
 

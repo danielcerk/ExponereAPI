@@ -1,3 +1,5 @@
+from django.shortcuts import get_object_or_404
+
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import (
 
@@ -5,14 +7,16 @@ from rest_framework.permissions import (
     SAFE_METHODS
 
 )
-
-from .models import Catalog, Link
-from .serializers import CatalogSerializer, LinkSerializer
-
 from rest_framework.parsers import ( 
     MultiPartParser, FormParser,
     JSONParser
 )
+
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from .models import Catalog, Link
+from .serializers import CatalogSerializer, LinkSerializer
 
 class IsOwnerOrReadOnly(BasePermission):
 
@@ -45,8 +49,39 @@ class CatalogViewSet(ModelViewSet):
     parser_classes = (MultiPartParser, FormParser, JSONParser)
     permission_classes = [IsOwnerOrReadOnly]
 
-    queryset = Catalog.objects.all()
     serializer_class = CatalogSerializer
+
+    def get_queryset(self):
+
+        return Catalog.objects.all()
+    
+    @action(detail=False, methods=['get', 'put', 'patch', 'delete'])
+    def my(self, request):
+
+        catalog = get_object_or_404(Catalog, user=self.request.user)
+
+        if request.method == 'GET':
+
+            return Response(self.get_serializer(catalog).data)
+
+        if request.method in ['PUT', 'PATCH']:
+
+            serializer = self.get_serializer(
+                catalog,
+                data=request.data,
+                partial=(request.method == 'PATCH')
+            )
+
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+
+            return Response(serializer.data)
+
+        if request.method == 'DELETE':
+
+            catalog.delete()
+
+            return Response(status=204)
     
 class LinkViewSet(ModelViewSet):
     

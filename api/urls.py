@@ -9,7 +9,7 @@ urlpatterns = [
     path('', include('api.category.urls')),
     path('catalogs/', include('api.coupon.urls')),
     path('catalogs/', include('api.customer.urls')),
-    path('catalogs/', include('api.analytic.urls')),
+    path('', include('api.analytic.urls')),
     path('catalogs/', include('api.notification.urls')),
     path('catalogs/', include('api.order.urls')),
     path('catalogs/', include('api.product.urls')),

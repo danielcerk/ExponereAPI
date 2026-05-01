@@ -52,8 +52,8 @@ class Product(models.Model):
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        null=True,
-        blank=True,
+        null=False,
+        default=0.01,
         verbose_name="Valor mínimo por pedido para frete grátis"
     )
 

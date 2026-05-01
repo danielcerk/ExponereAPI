@@ -303,7 +303,7 @@ class Image(models.Model):
         if not self.alt_text:
 
             self.alt_text = (
-                f'Foto de {self.product.title} da {self.product.catalog.title}'
+                f'Foto de {self.product.title} da {self.product.catalog.name}'
             )
 
         super().save(*args, **kwargs)

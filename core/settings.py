@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from urllib.parse import urlparse, parse_qsl
 from datetime import timedelta
 
+from corsheaders.defaults import default_headers
+
 import re
 
 load_dotenv()
@@ -95,6 +97,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -208,6 +211,8 @@ if DEBUG:
 
     ]
 
+    CORS_ALLOW_HEADERS = list(default_headers) + ['x-api-key']
+
     CSRF_TRUSTED_ORIGINS =  [
 
         'http://localhost:3000',
@@ -224,6 +229,8 @@ else:
         'https://exponere.com.br',
 
     ]
+
+    CORS_ALLOW_HEADERS = list(default_headers) + ['x-api-key']
 
     CSRF_TRUSTED_ORIGINS =  [
 

@@ -21,21 +21,21 @@ class IsOwner(BasePermission):
         return obj.user == request.user
 
 class AnalyticView(APIView):
-    
     permission_classes = [IsOwner]
 
     def get(self, request):
-
-        catalog = get_catalog(self.request.user.pk)
+        catalog = get_catalog(request.user.pk)
 
         self.check_object_permissions(request, catalog)
+
+        days = int(request.query_params.get("days") or 7)
 
         serializer = AnalyticSerializer(
             catalog,
             context={
-                'days': request.query_params.get('days'),
-                'start_date': request.query_params.get('start_date'),
-                'end_date': request.query_params.get('end_date'),
+                "days": days,
+                "start_date": request.query_params.get("start_date"),
+                "end_date": request.query_params.get("end_date"),
             }
         )
 

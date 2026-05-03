@@ -1,16 +1,149 @@
 from django.shortcuts import get_object_or_404
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper
 from django.utils import timezone
-from datetime import timedelta
+from django.conf import settings
+from django.db.models.functions import TruncDate
+
+from datetime import datetime, timedelta
 
 from api.catalog.models import Catalog
 
 from api.wishlist.models import Wishlist
 from api.customer.models import Customer
 
+from .models import AnalyticRoute
+
+from google.oauth2 import service_account
+from google.analytics.data_v1beta import BetaAnalyticsDataClient
+from google.analytics.data_v1beta.types import (
+    DateRange,
+    Metric,
+    Dimension,
+    FilterExpression,
+    Filter,
+    RunReportRequest,
+)
+
+import json
+
+credentials_info = settings.GA4_CREDENTIALS
+PROPERTY_ID_GA4 = settings.PROPERTY_ID_GA4
+
+if isinstance(credentials_info, str):
+    
+    credentials_info = json.loads(credentials_info)
+
+credentials = service_account.Credentials.from_service_account_info(
+    credentials_info
+)
+
+client = BetaAnalyticsDataClient(credentials=credentials)
+
 def get_catalog(id):
     
     return get_object_or_404(Catalog, user__pk=id)
+
+def get_days_from_filter(period: str):
+    periods = {
+        "1d": 1,
+        "7d": 7,
+        "15d": 15,
+        "30d": 30,
+    }
+    return periods.get(period, 30)
+
+def get_route_chart_data(
+    user_id,
+    days=7,
+    start_date=None,
+    end_date=None
+):
+    catalog = get_catalog(user_id)
+
+    analytic_route = get_object_or_404(
+        AnalyticRoute,
+        catalog=catalog
+    )
+
+    slug = analytic_route.slug
+
+    if start_date and end_date:
+        start = datetime.strptime(
+            start_date, "%Y-%m-%d"
+        ).date()
+
+        end = datetime.strptime(
+            end_date, "%Y-%m-%d"
+        ).date()
+
+        ga_start_date = start_date
+        ga_end_date = end_date
+
+    else:
+        days = int(days or 7)
+        end = timezone.now().date()
+        start = end - timedelta(days=days - 1)
+
+        ga_start_date = f"{days}daysAgo"
+        ga_end_date = "today"
+
+    request = RunReportRequest(
+        property=f"properties/{PROPERTY_ID_GA4}",
+        dimensions=[
+            Dimension(name="date"),
+        ],
+        metrics=[
+            Metric(name="screenPageViews"),
+        ],
+        date_ranges=[
+            DateRange(
+                start_date=ga_start_date,
+                end_date=ga_end_date,
+            )
+        ],
+        dimension_filter=FilterExpression(
+            filter=Filter(
+                field_name="pagePath",
+                string_filter=Filter.StringFilter(
+                    value=f"/{slug}",
+                    match_type=Filter.StringFilter.MatchType.CONTAINS
+                )
+            )
+        )
+    )
+
+    response = client.run_report(request)
+
+    ga_data = {}
+
+    for row in response.rows:
+        raw_date = row.dimension_values[0].value
+
+        formatted_date = f"{raw_date[6:8]}/{raw_date[4:6]}"
+
+        ga_data[formatted_date] = {
+            "views": int(row.metric_values[0].value),
+        }
+
+    chart_data = []
+    current_day = start
+
+    while current_day <= end:
+        formatted_day = current_day.strftime("%d/%m")
+
+        metrics = ga_data.get(
+            formatted_day,
+            {"views": 0}
+        )
+
+        chart_data.append({
+            "day": formatted_day,
+            "views": metrics["views"],
+        })
+
+        current_day += timedelta(days=1)
+
+    return chart_data
 
 def apply_date_filter(qs, start_date=None, end_date=None, days=None):
 

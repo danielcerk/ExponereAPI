@@ -11,7 +11,6 @@ from .utils import (
 class FinancialSerializer(serializers.Serializer):
 
     revenue = serializers.SerializerMethodField()
-    profit = serializers.SerializerMethodField()
     best_product = serializers.SerializerMethodField()
     worst_product = serializers.SerializerMethodField()
 
@@ -26,10 +25,6 @@ class FinancialSerializer(serializers.Serializer):
     def get_revenue(self, obj):
 
         return revenue_catalog(obj.id, **self.get_filters())
-
-    def get_profit(self, obj):
-
-        return profit_catalog(obj.id, **self.get_filters())
 
     def get_best_product(self, obj):
 

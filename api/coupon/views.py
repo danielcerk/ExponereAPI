@@ -1,8 +1,11 @@
+from django.shortcuts import get_object_or_404
+
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import (
 
     BasePermission,
-    SAFE_METHODS
+    SAFE_METHODS,
+    IsAuthenticated
 
 )
 
@@ -17,7 +20,7 @@ class IsOwnerOrReadOnly(BasePermission):
 
             return True
 
-        return request.catalog.user and request.user.is_authenticated
+        return request.user and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
 
@@ -31,36 +34,53 @@ class BaseCouponViewSet(ModelViewSet):
 
     permission_classes = [IsOwnerOrReadOnly]
 
+    def get_catalog(self):
+
+        queryset = Catalog.objects.filter(
+
+            pk=self.kwargs["catalog_pk"]
+
+        )
+
+        if self.request.method not in SAFE_METHODS:
+            
+            queryset = queryset.filter(user=self.request.user)
+
+        return get_object_or_404(queryset)
+
     def get_queryset(self):
-        return self.queryset.filter(catalog__user=self.request.user)
+
+        return self.queryset.filter(
+
+            catalog=self.get_catalog()
+
+        )
 
     def perform_create(self, serializer):
-        serializer.save()
+
+        serializer.save(
+
+            catalog=self.get_catalog()
+
+        )
+
 
 class CouponProgressiveViewSet(BaseCouponViewSet):
-    
-    permission_classes = [IsOwnerOrReadOnly]
 
     queryset = CouponProgressive.objects.all()
     serializer_class = CouponProgressiveSerializer
 
 class CouponFixedValueViewSet(BaseCouponViewSet):
 
-    permission_classes = [IsOwnerOrReadOnly]
-
     queryset = CouponFixedValue.objects.all()
     serializer_class = CouponFixedValueSerializer
 
 class CouponPercentValueViewSet(BaseCouponViewSet):
 
-    permission_classes = [IsOwnerOrReadOnly]
-    
     queryset = CouponPercentValue.objects.all()
     serializer_class = CouponPercentValueSerializer
 
 class CouponFirstBuyViewSet(BaseCouponViewSet):
-
-    permission_classes = [IsOwnerOrReadOnly]
 
     queryset = CouponFirstBuy.objects.all()
     serializer_class = CouponFirstBuySerializer
@@ -68,15 +88,14 @@ class CouponFirstBuyViewSet(BaseCouponViewSet):
 class CouponUsageViewSet(ModelViewSet):
 
     permission_classes = [IsOwnerOrReadOnly]
-
     queryset = CouponUsage.objects.all()
     serializer_class = CouponUsageSerializer
-    permission_classes = [IsOwnerOrReadOnly]
 
     def get_queryset(self):
 
         return self.queryset.filter(
 
+            coupon__catalog__pk=self.kwargs["catalog_pk"],
             coupon__catalog__user=self.request.user
 
         )

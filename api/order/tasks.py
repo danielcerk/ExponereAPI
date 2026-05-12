@@ -10,19 +10,22 @@ from .models import Order, ProductOrder
 def send_confirmation_order_customer(order_id):
 
     order = Order.objects.select_related(
-        "catalog", "customer"
-    ).prefetch_related("items__wishlist_product").get(id=order_id)
+        "catalog",
+        "customer"
+    ).prefetch_related(
+        "items__wishlist_product__product"
+    ).get(id=order_id)
 
     items_text = ""
 
     for item in order.items.all():
         
-        product = item.wishlist_product
+        wishlist = item.wishlist_product
 
         items_text += (
-            f"- {product.name} | "
-            f"Qtd: {product.quantity} | "
-            f"Preço: R$ {product.price}\n"
+            f"- {wishlist.product.title} | "
+            f"Qtd: {wishlist.quantity} | "
+            f"Preço: R$ {wishlist.product.price}\n"
         )
 
     body = f"""

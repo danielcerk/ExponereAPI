@@ -9,17 +9,16 @@ class Notification(models.Model):
 
     class NotificationType(models.TextChoices):
 
-        ORDER = "order", "Pedido"
-        PAYMENT = "payment", "Pagamento"
-        SYSTEM = "system", "Sistema"
-        MARKETING = "marketing", "Marketing"
-        ALERT = "alert", "Alerta"
+        ORDER = "order", "Pedido" # Para questões relacionadas a pedidos
+        SYSTEM = "system", "Sistema" # Para atualizações de sistema
+        ALERT = "alert", "Alerta" # Para questões de login, ativação de 2FA , etc
 
     catalog = models.ForeignKey(
         Catalog,
         on_delete=models.CASCADE,
         related_name="notifications",
         verbose_name="Catálogo",
+        null=True
     )
 
     user = models.ForeignKey(

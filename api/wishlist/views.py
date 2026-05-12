@@ -53,5 +53,6 @@ class WishlistViewSet(
 
         return Wishlist.objects.filter(
             session_key=session_key,
-            product__catalog__id=catalog_id
+            product__catalog__id=catalog_id,
+            is_active=True
         )

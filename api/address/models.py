@@ -83,9 +83,13 @@ class Address(models.Model):
 
         if self.cep:
 
-            address = verify_cep(self.cep)
+            try:
 
-            if address:
+                address = verify_cep(self.cep)
+
+                if not address or address.get("erro") == "true":
+
+                    raise ValidationError({"cep": "CEP inválido ou não encontrado."})
 
                 self.street = address.get("logradouro")
                 self.neighborhood = address.get("bairro")
@@ -99,8 +103,14 @@ class Address(models.Model):
                 state_obj = get_states(UF=address.get("uf"))
 
                 if state_obj:
-                    
+
                     self.state = state_obj["Uf"]
+
+            except Exception as e:
+                
+                raise ValidationError({
+                    "cep": f"Erro ao validar CEP: {str(e)}"
+                })
 
         parts = [
             self.street,

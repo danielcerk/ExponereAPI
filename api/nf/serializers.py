@@ -11,11 +11,13 @@ from api.cloudinary_utils import (
 
 class NFSerializer(serializers.ModelSerializer):
 
+    file = serializers.FileField(write_only=True, required=False)
+
     class Meta:
 
         model = NF
         fields = '__all__'
-        read_only_fields = ('id', 'created_at', 'updated_at', 'file_url')
+        read_only_fields = ('id', 'order', 'created_at', 'updated_at', 'file_url')
 
     def validate_access_key(self, value):
 

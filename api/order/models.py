@@ -16,11 +16,11 @@ class Order(models.Model):
         verbose_name="Catalogo",
     )
 
-    customer = models.OneToOneField(
+    customer = models.ForeignKey(
         Customer,
         on_delete=models.CASCADE,
-        verbose_name="Cliente",
-        related_name="orders"
+        related_name="orders",
+        verbose_name='Cliente'
     )
 
     subtotal = models.DecimalField(
@@ -118,7 +118,7 @@ class Order(models.Model):
     def calculate_totals(self):
 
         subtotal = sum(
-            [(item.wishlist_product.price * item.wishlist_product.quantity) for item in self.items.all()]
+            [(item.wishlist_product.product.price * item.wishlist_product.quantity) for item in self.items.all()]
         )
 
         self.apply_first_buy_coupon()
@@ -135,12 +135,6 @@ class Order(models.Model):
         self.discount = discount
         self.total = total if total > 0 else Decimal("0.00")
 
-
-    def save(self, *args, **kwargs):
-
-        self.calculate_totals()
-        
-        super().save(*args, **kwargs)
 
 class ProductOrder(models.Model):
 

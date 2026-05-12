@@ -1,48 +1,68 @@
+from django.shortcuts import get_object_or_404
 
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import (
-
-    BasePermission
-
-)
+from rest_framework.permissions import BasePermission
 
 from .models import Order
 from .serializers import OrderSerializer
+from api.nf.models import NF
+from api.cloudinary_utils import delete_from_cloudinary_nf
 
-class IsOwner(BasePermission):
+class IsOrderOwner(BasePermission):
 
     def has_permission(self, request, view):
 
-        return request.user and request.user.is_authenticated
+        if not request.session.session_key:
+
+            request.session.save()
+
+        return True
 
     def has_object_permission(self, request, view, obj):
 
-        return obj.catalog.user == request.user
+        if request.user.is_authenticated:
+
+            return obj.catalog.user == request.user
+
+        return obj.customer.session_key == request.session.session_key
+
 
 class OrderViewSet(ModelViewSet):
 
-    permission_classes = [IsOwner]
+    permission_classes = [IsOrderOwner]
     serializer_class = OrderSerializer
 
     def get_queryset(self):
 
-        catalog_id = self.kwargs.get("catalog_id")
+        catalog_id = self.kwargs.get("catalog_pk")
 
-        session_key = self.request.session.session_key
+        queryset = Order.objects.filter(
 
-        if session_key:
+            catalog__id=catalog_id
 
-            orders =  Order.objects.filter(
-                session_key=session_key,
-                product__catalog__id=catalog_id
-            )
+        )
 
-        else:
+        if self.request.user.is_authenticated:
 
-            orders = Order.objects.all(
+            if queryset.filter(
 
-                product__catalog__id=catalog_id
+                catalog__user=self.request.user
 
-            )
+            ).exists():
+                
+                return queryset
 
-        return orders
+        return queryset.filter(
+
+            customer__session_key=self.request.session.session_key
+
+        )
+    
+    def perform_destroy(self, instance):
+
+        nf = get_object_or_404(NF, order=instance)
+
+        delete_from_cloudinary_nf(nf.file_url)
+
+        instance.delete()
+

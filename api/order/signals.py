@@ -9,5 +9,5 @@ from .tasks import send_confirmation_order_customer
 def create_order_confirmation(sender, instance, created, **kwargs):
 
     if instance.is_paid:
-        
+
         send_confirmation_order_customer.delay(instance.id)

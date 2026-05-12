@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from django.utils import timezone
 
 from .models import (
     CouponProgressive,
@@ -16,7 +15,6 @@ class BaseCouponSerializer(serializers.ModelSerializer):
     class Meta:
         fields = [
             "id",
-            "catalog",
             "name",
             "code",
             "is_active",
@@ -26,9 +24,23 @@ class BaseCouponSerializer(serializers.ModelSerializer):
             "end_date",
             "created_at",
             "updated_at",
-            "is_valid_coupon"
+            "is_valid_coupon",
+            "min_purchase_value"
         ]
-        read_only_fields = ("usage_count", "created_at", "updated_at")
+        read_only_fields = (
+            "id",
+            "catalog",
+            "usage_count", 
+            "created_at", 
+            "updated_at"
+        )
+
+        extra_kwargs = {
+
+            "is_active": {"required": False},
+            "is_valid_coupon": {"required": False}
+
+        }
 
     def get_is_valid_coupon(self, obj):
 
@@ -129,16 +141,20 @@ class CouponDynamicSerializer(serializers.Serializer):
 
     def to_representation(self, instance):
 
-        if isinstance(instance, CouponProgressive):
-            return CouponProgressiveSerializer(instance).data
+        if hasattr(instance, "couponprogressive"):
 
-        if isinstance(instance, CouponFixedValue):
-            return CouponFixedValueSerializer(instance).data
+            return CouponProgressiveSerializer(instance.couponprogressive).data
 
-        if isinstance(instance, CouponPercentValue):
-            return CouponPercentValueSerializer(instance).data
+        if hasattr(instance, "couponfixedvalue"):
 
-        if isinstance(instance, CouponFirstBuy):
-            return CouponFirstBuySerializer(instance).data
+            return CouponFixedValueSerializer(instance.couponfixedvalue).data
+
+        if hasattr(instance, "couponpercentvalue"):
+
+            return CouponPercentValueSerializer(instance.couponpercentvalue).data
+
+        if hasattr(instance, "couponfirstbuy"):
+            
+            return CouponFirstBuySerializer(instance.couponfirstbuy).data
 
         return None

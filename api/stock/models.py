@@ -144,7 +144,7 @@ class StockMovement(models.Model):
     )
 
     purchase_price = models.DecimalField(
-        verbose_name='Preço de compra',
+        verbose_name='Valor da operação',
         max_digits=10,
         decimal_places=2,
         default=Decimal('0.00'),

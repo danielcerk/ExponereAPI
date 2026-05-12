@@ -181,6 +181,7 @@ def get_all_wishlist(id, start_date=None, end_date=None, days=None):
 
     qs = Wishlist.objects.filter(
         product__catalog=cat,
+        is_active=True
     )
 
     qs = apply_date_filter(qs, start_date, end_date, days)

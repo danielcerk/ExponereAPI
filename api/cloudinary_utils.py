@@ -55,7 +55,7 @@ def delete_from_cloudinary_img(file_url: str):
     parts = file_url.split("/")
     filename = parts[-1]
     folder = parts[-2]
-    public_id = f"{folder}/{filename.split('.')[0]}"
+    public_id = f"exponere/{folder}/{filename.split('.')[0]}"
 
     return cloudinary.uploader.destroy(public_id, resource_type="image")
 
@@ -89,9 +89,21 @@ def upload_to_cloudinary_nf(file):
 
 def delete_from_cloudinary_nf(file_url: str):
 
-    parts = file_url.split("/")
-    filename = parts[-1]
-    folder = parts[-2]
-    public_id = f"{folder}/{filename.split('.')[0]}"
+    try:
 
-    return cloudinary.uploader.destroy(public_id, resource_type="raw")
+        path = file_url.split("/upload/")[1]
+
+        public_id = "/".join(path.split("/")[1:])
+
+        result = cloudinary.uploader.destroy(
+            public_id,
+            resource_type="raw"
+        )
+
+        return result
+
+    except Exception as e:
+
+        print(e)
+
+        return None

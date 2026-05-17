@@ -1,5 +1,5 @@
 # Para local, windows: python -m celery -A core worker -l info -P solo
-# Para produção, linux: python -m celery -A core worker
+# Para produção, linux: python -m celery -A core worker -B -l info -P solo
 
 
 import os

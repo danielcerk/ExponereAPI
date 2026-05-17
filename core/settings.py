@@ -1,14 +1,12 @@
 import os
 from pathlib import Path
-
-from django.utils.translation import gettext_lazy as _
-
 from dotenv import load_dotenv
-
 from urllib.parse import urlparse, parse_qsl
 from datetime import timedelta
-
 from corsheaders.defaults import default_headers
+from celery.schedules import crontab
+
+from django.utils.translation import gettext_lazy as _
 
 import re
 
@@ -447,3 +445,10 @@ CACHES = {
 MELHOR_ENVIO_CLIENT_ID=os.getenv('MELHOR_ENVIO_CLIENT_ID')
 MELHOR_ENVIO_CLIENT_SECRET=os.getenv('MELHOR_ENVIO_CLIENT_SECRET')
 MELHOR_ENVIO_ACCESS_TOKEN = os.getenv('MELHOR_ENVIO_ACCESS_TOKEN')
+
+CELERY_BEAT_SCHEDULE = {
+    "disable-expired-coupons": {
+        "task": "api.coupon.tasks.disable_expired_coupons",
+        "schedule": crontab(),
+    },
+}

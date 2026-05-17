@@ -51,6 +51,8 @@ class OrderViewSet(ModelViewSet):
             ).exists():
                 
                 return queryset
+            
+        print(self.request.session.session_key)
 
         return queryset.filter(
 

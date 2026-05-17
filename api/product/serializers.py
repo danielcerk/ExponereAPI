@@ -113,7 +113,10 @@ class ProductSerializer(serializers.ModelSerializer):
         required=False
     )
 
-    images = ImageSerializer(many=True)
+    images = ImageSerializer(
+        many=True,
+        required=False
+    )
 
     class Meta:
         

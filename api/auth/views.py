@@ -65,7 +65,7 @@ class IsOwner(BasePermission):
 
             return True
 
-        return obj.pk == request.user.pkk
+        return obj.pk == request.user.pk
 
 class MyTokenObtainPairView(TokenObtainPairView):
 

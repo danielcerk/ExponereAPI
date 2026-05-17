@@ -42,7 +42,12 @@ class OrderSerializer(serializers.ModelSerializer):
 
     coupon = CouponDynamicSerializer(read_only=True)
 
-    coupon_code = serializers.CharField(write_only=True, required=False)
+    coupon_code = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_null=True,
+        allow_blank=True
+    )
 
     nf = serializers.SerializerMethodField()
     nf_data = NFSerializer(write_only=True, required=False)
@@ -136,12 +141,16 @@ class OrderSerializer(serializers.ModelSerializer):
 
             wishlist_product = item["wishlist_product"]
 
-            ProductOrder.objects.create(
-                order=order,
-                wishlist_product=wishlist_product
-            )
+            get_wishlist = get_object_or_404(Wishlist, pk=wishlist_product.id, is_active=True)
 
-            wishlist_ids.append(wishlist_product.id)
+            if get_wishlist:
+
+                ProductOrder.objects.create(
+                    order=order,
+                    wishlist_product=wishlist_product
+                )
+
+                wishlist_ids.append(wishlist_product.id)
 
         if wishlist_ids:
 
@@ -151,9 +160,19 @@ class OrderSerializer(serializers.ModelSerializer):
 
             coupon = get_coupon_by_code(catalog, coupon_code)
 
-            if coupon and coupon.is_valid():
+            if not coupon:
 
-                order.coupon = coupon
+                raise serializers.ValidationError({
+                    "coupon_code": "Cupom inválido, expirado ou indisponível."
+                })
+
+            if not coupon.is_valid():
+
+                raise serializers.ValidationError({
+                    "coupon_code": "Cupom não pode ser utilizado."
+                })
+
+            order.coupon = coupon
 
         if nf_data:
 
@@ -230,7 +249,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
         if customer_data is not None:
 
-            customer = Customer.objects.filter(catalog=instance.catalog).first()
+            customer = instance.customer
 
             if customer:
 

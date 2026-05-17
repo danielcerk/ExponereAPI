@@ -1,12 +1,16 @@
 from django.shortcuts import get_object_or_404
 
-from rest_framework import mixins
+from rest_framework import mixins, status
 from rest_framework.viewsets import GenericViewSet
 
 from api.catalog.models import Catalog
 
 from .serializers import NotificationSerializer
 from .models import Notification
+
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.utils import timezone
 
 from rest_framework.permissions import (
 
@@ -23,13 +27,7 @@ class IsCatalogOwner(BasePermission):
             
             return False
 
-        catalog_id = view.kwargs.get("catalog_pk")
-
-        if not catalog_id:
-
-            return False
-
-        catalog = Catalog.objects.filter(pk=catalog_id).first()
+        catalog = Catalog.objects.filter(user=request.user).first()
 
         if not catalog:
 
@@ -42,22 +40,46 @@ class IsCatalogOwner(BasePermission):
         return obj.catalog.user == request.user
     
 class NotificationViewSet(
+    mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
     GenericViewSet
-    ):
-
+):
     serializer_class = NotificationSerializer
     permission_classes = [IsCatalogOwner]
 
     def get_queryset(self):
 
-        catalog_id = self.kwargs.get("catalog_pk")
-
-        if not catalog_id:
-
-            return Notification.objects.none()
-
         return Notification.objects.filter(
-            catalog_id=catalog_id,
             catalog__user=self.request.user
         )
+
+    @action(detail=True, methods=["patch"], url_path="mark-as-read")
+    def mark_as_read(self, request, pk=None):
+        
+        notification = self.get_object()
+
+        notification.is_read = True
+        notification.read_at = timezone.now()
+        notification.save(update_fields=["is_read", "read_at", "updated_at"])
+
+        return Response(
+            {
+                "message": "Notificação marcada como lida.",
+                "is_read": notification.is_read,
+                "read_at": notification.read_at
+            },
+            status=status.HTTP_200_OK
+        )
+    
+    @action(detail=False, methods=["patch"], url_path="mark-all-as-read")
+    def mark_all_as_read(self, request):
+
+        updated = self.get_queryset().filter(is_read=False).update(
+            is_read=True,
+            read_at=timezone.now()
+        )
+
+        return Response({
+            "message": f"{updated} notificações marcadas como lidas."
+        })

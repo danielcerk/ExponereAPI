@@ -4,7 +4,38 @@ from django.conf import settings
 from celery import shared_task
 
 from .models import Order, ProductOrder
+from api.notification.models import Notification
 
+@shared_task()
+def create_notification_order_customer(order_id):
+
+    order = Order.objects.select_related(
+        "catalog",
+        "customer",
+        "catalog__user"
+    ).prefetch_related(
+        "items__wishlist_product__product"
+    ).get(id=order_id)
+
+    Notification.objects.create(
+        catalog=order.catalog,
+        user=order.catalog.user,
+        type_notification=Notification.NotificationType.ORDER,
+        title=f"Novo pedido #{order.id}",
+        message=(
+            f"{order.customer.full_name} realizou um pedido "
+            f"no valor de R$ {order.total}."
+        ),
+        action_url=f"/admin/orders/{order.id}",
+        payload={
+            "order_id": order.id,
+            "customer_name": order.customer.full_name,
+            "customer_email": order.customer.email,
+            "total": str(order.total),
+            "is_paid": order.is_paid,
+            "payment_method": order.payment_method,
+        }
+    )
 
 @shared_task()
 def send_confirmation_order_customer(order_id):

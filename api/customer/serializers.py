@@ -30,7 +30,8 @@ class CustomerSerializer(serializers.ModelSerializer):
 
             'session_key': {'required': False},
             "is_active": {'required': False},
-            "catalog": {'required': False}
+            "catalog": {'required': False},
+            "cpf_cnpj": {"validators": []},
 
         }
 
@@ -85,7 +86,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
 
-        request = self.context.get('request')
+        request = self.context.get("request")
 
         session = request.session
 
@@ -102,12 +103,31 @@ class CustomerSerializer(serializers.ModelSerializer):
 
         validated_data["full_name"] = full_name
         validated_data["slug"] = slugify(full_name)
-
         validated_data["session_key"] = session.session_key
+
+        cpf_cnpj = validated_data.get("cpf_cnpj")
+
+        customer = None
+
+        if cpf_cnpj:
+
+            customer = Customer.objects.filter(cpf_cnpj=cpf_cnpj).first()
 
         if address_data:
 
-            validated_data["address"] = Address.objects.create(**address_data)
+            address = Address.objects.create(**address_data)
+
+            validated_data["address"] = address
+
+        if customer:
+
+            for attr, value in validated_data.items():
+
+                setattr(customer, attr, value)
+
+            customer.save()
+
+            return customer
 
         return Customer.objects.create(**validated_data)
 

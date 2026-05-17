@@ -29,5 +29,10 @@ def create_coupon_usage_per_user(sender, instance, created, **kwargs):
     get_coupon = get_object_or_404(Coupon, pk=instance.coupon.pk)
 
     get_coupon.usage_count += 1
+
+    if get_coupon.usage_count == get_coupon.usage_limit:
+
+        get_coupon.is_active = False
+
     get_coupon.save()
 

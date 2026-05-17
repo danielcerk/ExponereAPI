@@ -5,6 +5,7 @@ from decimal import Decimal
 from api.catalog.models import Catalog
 from api.customer.models import Customer
 
+from django.utils import timezone
 class Coupon(models.Model):
 
     catalog = models.ForeignKey(
@@ -43,7 +44,8 @@ class Coupon(models.Model):
     start_date = models.DateTimeField(
         verbose_name="Data de início",
         null=True,
-        blank=True
+        blank=True,
+        default=timezone.now
     )
 
     end_date = models.DateTimeField(
@@ -61,6 +63,16 @@ class Coupon(models.Model):
         verbose_name="Atualizado em",
         auto_now=True
     )
+
+    @property
+    def discount_type(self):
+
+        return None
+
+    @property
+    def discount_value(self):
+
+        return None
 
     def is_valid(self):
 
@@ -122,6 +134,16 @@ class CouponProgressive(Coupon):
         validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
 
+    @property
+    def discount_type(self):
+
+        return "progressive"
+
+    @property
+    def coupon_discount_value(self):
+
+        return self.percent_discount
+
     class Meta:
 
         verbose_name = "Cupom Progressivo"
@@ -153,6 +175,16 @@ class CouponFixedValue(Coupon):
         null=True,
         blank=True
     )
+
+    @property
+    def discount_type(self):
+
+        return "fixed"
+
+    @property
+    def normalized_discount_value(self):
+        
+        return self.__dict__["discount_value"]
 
     class Meta:
 
@@ -194,6 +226,16 @@ class CouponPercentValue(Coupon):
         blank=True
     )
 
+    @property
+    def discount_type(self):
+
+        return "percentage"
+
+    @property
+    def coupon_discount_value(self):
+
+        return self.percent_discount
+
     class Meta:
 
         verbose_name = "Cupom com Valor Percentual"
@@ -231,6 +273,16 @@ class CouponFirstBuy(Coupon):
         null=True,
         blank=True
     )
+
+    @property
+    def discount_type(self):
+
+        return "first_buy"
+
+    @property
+    def coupon_discount_value(self):
+        
+        return self.percent_discount
 
     class Meta:
 

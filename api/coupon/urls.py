@@ -14,5 +14,6 @@ router.register(r'coupon-usage', CouponUsageViewSet, basename='coupon-usage')
 urlpatterns = [
 
     path('<int:catalog_pk>/', include(router.urls)),
+    path("coupon/is-valid/", CouponIsValidView.as_view(), name="coupon-is-valid"),
 
 ]

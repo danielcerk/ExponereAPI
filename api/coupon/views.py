@@ -1,16 +1,23 @@
 from django.shortcuts import get_object_or_404
 
+from rest_framework.views import APIView
+
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import (
 
     BasePermission,
     SAFE_METHODS,
-    IsAuthenticated
+    IsAuthenticated,
+    AllowAny
 
 )
+from rest_framework.response import Response
+from rest_framework import status
 
 from .models import *
 from .serializers import *
+
+from .utils import get_coupon_by_code
 
 class IsOwnerOrReadOnly(BasePermission):
 
@@ -98,4 +105,66 @@ class CouponUsageViewSet(ModelViewSet):
             coupon__catalog__pk=self.kwargs["catalog_pk"],
             coupon__catalog__user=self.request.user
 
+        )
+    
+class CouponIsValidView(APIView):
+    
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        catalog_id = request.query_params.get("catalog")
+        coupon_code = request.query_params.get("coupon_code")
+
+        if not catalog_id or not coupon_code:
+            return Response(
+                {
+                    "valid": False,
+                    "message": "catalog e coupon_code são obrigatórios."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            catalog = Catalog.objects.get(id=catalog_id)
+        except Catalog.DoesNotExist:
+            return Response(
+                {
+                    "valid": False,
+                    "message": "Catálogo não encontrado."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        coupon = get_coupon_by_code(catalog, coupon_code)
+
+        if not coupon:
+            return Response(
+                {
+                    "valid": False,
+                    "message": "Cupom não encontrado."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if not coupon.is_valid():
+            return Response(
+                {
+                    "valid": False,
+                    "message": "Cupom inválido ou expirado."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response(
+            {
+                "valid": True,
+                "message": "Cupom válido.",
+                "coupon": {
+                    "id": coupon.id,
+                    "code": coupon.code,
+                    "discount_type": coupon.discount_type,
+                    "discount_value": coupon.discount_value,
+                }
+            },
+            status=status.HTTP_200_OK
         )

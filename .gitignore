@@ -10,6 +10,9 @@ privacy.txt
 features.txt
 
 .env
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir
 
 # C extensions
 *.so

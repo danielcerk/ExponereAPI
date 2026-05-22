@@ -1,4 +1,4 @@
-# Para local, windows: python -m celery -A core worker -l info -P solo
+# Para local, windows: python -m celery -A core worker -l info -P solo | python -m celery -A core beat -l info
 # Para produção, linux: python -m celery -A core worker -B -l info -P solo
 
 

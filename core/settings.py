@@ -451,4 +451,8 @@ CELERY_BEAT_SCHEDULE = {
         "task": "api.coupon.tasks.disable_expired_coupons",
         "schedule": crontab(),
     },
+    "disable-canceled-plans": {
+        "task": "api.subscription.tasks.disable_canceled_plans",
+        'schedule': crontab(hour=21, minute=59),
+    }
 }

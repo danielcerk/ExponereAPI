@@ -165,7 +165,7 @@ class CreateCheckoutSessionAPIView(APIView):
 
                 customer = stripe.Customer.create(
                     email=request.user.email,
-                    name=request.user.name,
+                    name=request.user.username,
                     metadata={'user_id': str(request.user.id)}
                 )
 
@@ -408,35 +408,3 @@ class StripeWebhookAPIView(APIView):
             checkout_record.status = CheckoutSessionRecord.PaymentStatus.CANCELED
 
             checkout_record.save()
-
-@method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=True), name='dispatch')
-class RemoveAccess4CanceledPlan(APIView):
-
-    def get(self, request):
-
-        today = timezone.localdate()
-        
-        expired_checkouts = CheckoutSessionRecord.objects.filter(
-            plan_end_date__lte=today,
-            has_access=True
-        )
-
-        free_plan = Plan.objects.filter(name='Grátis').first()
-        count = 0
-
-        for checkout in expired_checkouts:
-
-            checkout.has_access = False
-            checkout.is_completed = False
-            
-            checkout.plan = free_plan
-            checkout.plan_end_date = None
-
-            checkout.save()
-
-            count += 1
-
-        return Response(
-            {"detail": f"OK"},
-            status=status.HTTP_200_OK
-        )

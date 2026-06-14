@@ -1,5 +1,7 @@
 from django.test import TestCase
 
+from django.core.exceptions import ValidationError
+
 from ..models import Address
 
 class AddressTestCase(TestCase):
@@ -18,6 +20,18 @@ class AddressTestCase(TestCase):
 
         self.assertEqual(address_count, 1)
         self.assertEqual(self.address.cep, '44067368')
+
+    def test_cep_invalid_with_letter_characters(self):
+
+        with self.assertRaises(ValidationError):
+
+            Address.objects.create(cep='XX')
+
+    def test_cep_invalid_with_number_characters(self):
+
+        with self.assertRaises(ValidationError):
+
+            Address.objects.create(cep='6589874-%$')
 
     def test_update_address(self):
 

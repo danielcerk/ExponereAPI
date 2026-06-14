@@ -7,8 +7,7 @@ from .views import (
     RegisterView,
     LogoutAPIView,
     AccountViewSet,
-    GoogleLogin, 
-    GoogleLoginCallback,
+    GoogleLogin,
     setup_2fa,
     confirm_2fa,
     ResetPassword,
@@ -25,12 +24,7 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('', include(router.urls)),
 
-    path("google/", GoogleLogin.as_view(), name="google_login"),
-    path(
-        "google/callback/",
-        GoogleLoginCallback.as_view(),
-        name="google_login_callback",
-    ),
+    path("google/login/", GoogleLogin.as_view()),
 
     path('logout/', LogoutAPIView.as_view(), name ='logout'),
 
@@ -38,6 +32,10 @@ urlpatterns = [
     path("2fa/confirm/", confirm_2fa, name="confirm-2fa"),
 
     path('reset/password/request', RequestPasswordReset.as_view(), name='reset_password_request'),
-    path('reset/password/update', ResetPassword.as_view(), name='reset_password_update'),
+    path(
+        'reset/password/update/<str:token>/',
+        ResetPassword.as_view(),
+        name='reset_password_update'
+    )
 
 ]

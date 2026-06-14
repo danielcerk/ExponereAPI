@@ -37,6 +37,33 @@ jobs:
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+
+          MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
+          MAILGUN_SENDER_DOMAIN: ${{ secrets.MAILGUN_SENDER_DOMAIN }}
+          MAILGUN_WELCOME_EMAIL_TEMPLATE: ${{ secrets.MAILGUN_WELCOME_EMAIL_TEMPLATE }}
+          MAILGUN_PASSWORD_RESET_EMAIL_TEMPLATE: ${{ secrets.MAILGUN_PASSWORD_RESET_EMAIL_TEMPLATE }}
+          MAILGUN_CONFIRMATION_EMAIL_TEMPLATE: ${{ secrets.MAILGUN_CONFIRMATION_EMAIL_TEMPLATE }}
+          MAILGUN_REMINDER_PRODUCT_EMAIL_TEMPLATE: ${{ secrets.MAILGUN_REMINDER_PRODUCT_EMAIL_TEMPLATE }}
+
+          STRAPI_API_KEY: ${{ secrets.STRAPI_API_KEY }}
+          STRAPI_ARTICLE_URL: ${{ secrets.STRAPI_ARTICLE_URL }}
+          STRAPI_CATEGORY_URL: ${{ secrets.STRAPI_CATEGORY_URL }}
+
+          PROPERTY_ID_GA4: ${{ secrets.PROPERTY_ID_GA4 }}
+
+          GA4_CREDENTIALS: ${{ secrets.GA4_CREDENTIALS }}
+
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+          CELERY_BROKER_URL_TEST: ${{ secrets.CELERY_BROKER_URL_TEST }}
+          CELERY_RESULT_BACKEND_TEST: ${{ secrets.CELERY_RESULT_BACKEND_TEST }}
+
+          CELERY_BROKER_URL_PROD: ${{ secrets.CELERY_BROKER_URL_PROD }}
+          CELERY_RESULT_BACKEND_PROD: ${{ secrets.CELERY_RESULT_BACKEND_PROD }}
+
+          MELHOR_ENVIO_CLIENT_ID: ${{ secrets.MELHOR_ENVIO_CLIENT_ID }}
+          MELHOR_ENVIO_CLIENT_SECRET: ${{ secrets.MELHOR_ENVIO_CLIENT_SECRET }}
+          MELHOR_ENVIO_ACCESS_TOKEN: ${{ secrets.MELHOR_ENVIO_ACCESS_TOKEN }}
           
         steps:
             - name: Checkout Repository
@@ -52,21 +79,26 @@ jobs:
                 python -m pip install --upgrade pip
                 pip install -r requirements.txt
 
+            - name: Migrate
+              run: |
+                python manage.py makemigrations
+                python manage.py migrate
+
             - name: Run Tests
               run: |
-                python manage.py test
-    deploy:
+                python manage.py test --noinput --keepdb
+    #deploy:
 
-        needs: build
-        runs-on: ubuntu-latest
+    #    needs: build
+    #    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v2
+    #    steps:
+    #        - name: Checkout Repository
+    #          uses: actions/checkout@v2
 
-            - name: Install Vercel CLI
-              run: npm install -g vercel
+    #        - name: Install Vercel CLI
+    #          run: npm install -g vercel
 
-            - name: Deploy to Vercel
-              run: |
-                vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --confirm
+    #        - name: Deploy to Vercel
+    #          run: |
+    #            vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --confirm

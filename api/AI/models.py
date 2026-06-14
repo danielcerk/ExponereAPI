@@ -1,8 +1,57 @@
 from django.db import models
 
-# Vamos criar um prompt para gerar copies humanas, otimizadas para qualquer tipo de caso e fazer com que evite mostrar algo do tipo como "Aqui está uma descrição..."
-# Quando a API do GEMINI gerar uma copy , ele deverá salvar o modelo
+from api.catalog.models import Catalog
+from api.product.models import Product
 
-class Copy(models.Model):
+class CopyProduct(models.Model):
 
-    pass
+    catalog = models.ForeignKey(
+        Catalog,
+        on_delete=models.CASCADE,
+        verbose_name='Catalogo',
+    )
+
+    product = models.ForeignKey(
+        'product.Product',
+        verbose_name='Produto',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='copies',
+        db_index=True,
+    )
+
+    description = models.TextField(
+
+        verbose_name='Descrição',
+        null=False, blank=True
+
+    )
+
+    created_at = models.DateTimeField(
+        verbose_name='Criado em',
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        verbose_name='Atualizado em',
+        auto_now=True
+    )
+
+    class Meta:
+
+        verbose_name = 'Copy de Produto'
+        verbose_name_plural = 'Copies de produtos'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['product']),
+            models.Index(fields=['created_at']),
+        ]
+
+    def __str__(self):
+
+        return f'Copy #{self.pk} do produto {self.product.title}'
+
+    def save(self, *args, **kwargs):
+
+        super().save(*args, **kwargs)

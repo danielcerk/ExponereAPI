@@ -67,7 +67,6 @@ class CheckoutSessionRecord(models.Model):
 
     stripe_checkout_session_id = models.CharField(
         max_length=255,
-        unique=True,
         help_text='ID da sessão de checkout no Stripe.'
     )
 
@@ -151,7 +150,7 @@ class CheckoutSessionRecord(models.Model):
 
     def __str__(self):
 
-        return f'Checkout de {self.user.name} - {self.get_status_display()}'
+        return f'Checkout de {self.user.username} - {self.get_status_display()}'
 
     def mark_as_completed(self):
 

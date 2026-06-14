@@ -1,12 +1,14 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+from urllib.parse import urlparse, parse_qsl
+from datetime import timedelta
+from corsheaders.defaults import default_headers
+from celery.schedules import crontab
 
 from django.utils.translation import gettext_lazy as _
 
-from dotenv import load_dotenv
-
-from urllib.parse import urlparse, parse_qsl
-from datetime import timedelta
+import re
 
 load_dotenv()
 
@@ -15,18 +17,30 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = [
 
-    '127.0.0.1',
-    'localhost',
-    'exponere.com.br'
+if not DEBUG:
 
-]
+    ALLOWED_HOSTS = [
+
+        '127.0.0.1',
+        'localhost',
+        'exponere.com.br'
+
+    ]
+
+else:
+
+    ALLOWED_HOSTS = [
+
+        '*'
+
+    ]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    "polymorphic",
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
@@ -50,18 +64,17 @@ INSTALLED_APPS = [
     'api.erp',
     'api.financial',
     'api.marketing',
+    'api.newsletter',
     'api.nf',
     'api.notification',
     'api.order',
     'api.payment',
     'api.product',
-    'api.qrcode',
     'api.wishlist',
-    'api.SEO',
     'api.shipping',
     'api.status',
     'api.stock',
-    #'api.subscription',
+    'api.subscription',
     'api.trend_marketing',
     
     'rest_framework',
@@ -70,7 +83,6 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
     'corsheaders',
-    'cities_light',
     'anymail',
     'pagseguro',
 
@@ -80,12 +92,10 @@ INSTALLED_APPS = [
     'dj_rest_auth.registration',
     'allauth.socialaccount.providers.google',
 
-    "django.contrib.contenttypes",
-    "polymorphic"
-
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -134,6 +144,7 @@ if DEBUG:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+    
 
 else:
 
@@ -187,17 +198,43 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CORS_ALLOWED_ORIGINS = [
+if DEBUG:
 
-    'http://localhost:3000',
+    CORS_ALLOWED_ORIGINS = [
 
-]
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
 
-CSRF_TRUSTED_ORIGINS =  [
+        'https://4026-170-0-137-155.ngrok-free.app',
 
-    'http://localhost:3000',
+    ]
 
-]
+    CORS_ALLOW_HEADERS = list(default_headers) + ['x-api-key']
+
+    CSRF_TRUSTED_ORIGINS =  [
+
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+
+        'https://4026-170-0-137-155.ngrok-free.app',
+
+    ]
+
+else:
+
+    CORS_ALLOWED_ORIGINS = [
+
+        'https://exponere.com.br',
+
+    ]
+
+    CORS_ALLOW_HEADERS = list(default_headers) + ['x-api-key']
+
+    CSRF_TRUSTED_ORIGINS =  [
+
+        'https://exponere.com.br',
+
+    ]
 
 LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
@@ -292,6 +329,8 @@ if DEBUG:
     STRIPE_LOCAL_PLAN_PREMIUM = os.getenv('STRIPE_LOCAL_PLAN_PREMIUM')
     STRIPE_LOCAL_PLAN_PREMIUM_2 = os.getenv('STRIPE_LOCAL_PLAN_PREMIUM_2')
 
+    SITE_URL = 'http://localhost:8000'
+
 else:
 
     DOMAIN = os.getenv('STRIPE_PROD_DOMAIN_WEHBOOK')
@@ -299,6 +338,13 @@ else:
     STRIPE_SECRET_KEY = os.getenv('STRIPE_PROD_SECRET_KEY')
     STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PROD_PUBLIC_KEY')
     STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_PROD_WEBHOOK_SECRET')
+
+    SITE_URL = 'https://exponere.com.br'
+    
+STRIPE_PLAN_NECESSARIO=os.getenv('STRIPE_PLAN_NECESSARIO')
+STRIPE_PLAN_ALCANCE=os.getenv('STRIPE_PLAN_ALCANCE')
+STRIPE_PLAN_DESTAQUE=os.getenv('STRIPE_PLAN_DESTAQUE')
+STRIPE_PLAN_AUTORIDADE=os.getenv('STRIPE_PLAN_AUTORIDADE')
 
 ANYMAIL = {
     "MAILGUN_API_KEY": os.getenv('MAILGUN_API_KEY'),
@@ -311,8 +357,9 @@ DEFAULT_FROM_EMAIL = "postmaster@mg.marketilize.com.br"
 SERVER_EMAIL = "postmaster@mg.marketilize.com.br"
 
 MAILGUN_WELCOME_EMAIL_TEMPLATE = os.getenv('MAILGUN_WELCOME_EMAIL_TEMPLATE')
-MAILGUN_PASSWORD_RESET_EMAIL_TEMPLATE = os.getenv('MAILFUN_PASSWORD_RESET_EMAIL_TEMPLATE')
+MAILGUN_PASSWORD_RESET_EMAIL_TEMPLATE = os.getenv('MAILGUN_PASSWORD_RESET_EMAIL_TEMPLATE')
 MAILGUN_CONFIRMATION_EMAIL_TEMPLATE = os.getenv('MAILGUN_CONFIRMATION_EMAIL_TEMPLATE')
+MAILGUN_REMINDER_PRODUCT_EMAIL_TEMPLATE = os.getenv('MAILGUN_REMINDER_PRODUCT_EMAIL_TEMPLATE')
 
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'suporteconstsoft@gmail.com'
@@ -334,9 +381,15 @@ if DEBUG:
 
     GOOGLE_OAUTH_CALLBACK_URL = 'http://localhost:3000/api/v1/auth/google/callback/'
 
+    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL_TEST')
+    CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND_TEST')
+
 else:
 
     GOOGLE_OAUTH_CALLBACK_URL = os.getenv('GOOGLE_OAUTH_CALLBACK_URL')
+
+    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL_PROD')
+    CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND_PROD')
 
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 
@@ -361,3 +414,45 @@ SOCIALACCOUNT_PROVIDERS = {
 
 GA4_CREDENTIALS = os.getenv('GA4_CREDENTIALS')
 PROPERTY_ID_GA4 = os.getenv('PROPERTY_ID_GA4')
+
+STRAPI_API_KEY = os.getenv('STRAPI_API_KEY')
+
+STRAPI_ARTICLE_URL = os.getenv('STRAPI_ARTICLE_URL')
+STRAPI_CATEGORY_URL = os.getenv('STRAPI_CATEGORY_URL')
+
+def get_redis_password(url):
+
+    pattern = r"redis:\/\/(?:[^:]+:)?([^@]+)@"
+    match = re.search(pattern, url)
+
+    return match.group(1) if match else None
+
+
+REDIS_URL = CELERY_BROKER_URL
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'PASSWORD': get_redis_password(REDIS_URL),
+        },
+        'TIMEOUT': 60 * 60,
+    }
+}
+
+MELHOR_ENVIO_CLIENT_ID=os.getenv('MELHOR_ENVIO_CLIENT_ID')
+MELHOR_ENVIO_CLIENT_SECRET=os.getenv('MELHOR_ENVIO_CLIENT_SECRET')
+MELHOR_ENVIO_ACCESS_TOKEN = os.getenv('MELHOR_ENVIO_ACCESS_TOKEN')
+
+CELERY_BEAT_SCHEDULE = {
+    "disable-expired-coupons": {
+        "task": "api.coupon.tasks.disable_expired_coupons",
+        "schedule": crontab(),
+    },
+    "disable-canceled-plans": {
+        "task": "api.subscription.tasks.disable_canceled_plans",
+        'schedule': crontab(hour=21, minute=59),
+    }
+}

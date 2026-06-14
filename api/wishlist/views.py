@@ -1,15 +1,14 @@
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import (
-
-    BasePermission,
-    SAFE_METHODS
-
+from rest_framework.viewsets import GenericViewSet
+from rest_framework.mixins import (
+    ListModelMixin,
+    CreateModelMixin,
+    DestroyModelMixin
 )
-
-from api.catalog.models import Catalog
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 from .models import Wishlist
 from .serializers import WishlistSerializer
+
 
 class IsOwner(BasePermission):
 
@@ -24,28 +23,36 @@ class IsOwner(BasePermission):
     def has_object_permission(self, request, view, obj):
 
         if request.method in SAFE_METHODS:
+
             return True
 
         session_key = request.session.session_key
 
         return obj.session_key == session_key
-    
-class WishlistViewSet(ModelViewSet):
 
+class WishlistViewSet(
+    ListModelMixin,
+    CreateModelMixin,
+    DestroyModelMixin,
+    GenericViewSet
+):
     permission_classes = [IsOwner]
     serializer_class = WishlistSerializer
+    http_method_names = ["get", "post", "delete"]
 
     def get_queryset(self):
 
-        catalog_id = self.kwargs.get("catalog_id")
+        catalog_id = self.kwargs.get("catalog_pk")
 
         session_key = self.request.session.session_key
 
         if not session_key:
+            
             self.request.session.create()
             session_key = self.request.session.session_key
 
         return Wishlist.objects.filter(
             session_key=session_key,
-            product__catalog__id=catalog_id
+            product__catalog__id=catalog_id,
+            is_active=True
         )

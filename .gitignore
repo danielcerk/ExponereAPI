@@ -3,12 +3,16 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+NGROK_command.txt
 README_blog.md
 terms.txt
 privacy.txt
 features.txt
 
 .env
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir
 
 # C extensions
 *.so

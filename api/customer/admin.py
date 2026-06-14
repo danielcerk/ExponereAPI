@@ -40,7 +40,6 @@ class CustomerAdmin(admin.ModelAdmin):
 
     readonly_fields = (
         "slug",
-        "session_key",
         "created_at",
         "updated_at",
     )

@@ -2,7 +2,9 @@ from django.db import models
 from django.utils.text import slugify
 
 from api.catalog.models import Catalog
-from api.category.models import Category
+from api.category.models import Category, SubCategory
+
+from django.core.exceptions import ValidationError
 
 class Product(models.Model):
 
@@ -40,12 +42,19 @@ class Product(models.Model):
         
     )
 
+    subcategory = models.ManyToManyField(
+        SubCategory,
+        verbose_name='Subcategorias',
+        blank=True
+        
+    )
+
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name="Valor mínimo por pedido para frete grátis"
+        null=False,
+        default=0.01,
+        verbose_name="Preço"
     )
 
     promotional_price = models.DecimalField(
@@ -124,7 +133,7 @@ class ProductLogisticInfo(models.Model):
         UNIT = "unit", "Unidade"
         OTHER = "other", "Outro"
 
-    product = models.ForeignKey(
+    product = models.OneToOneField(
         Product,
         on_delete=models.CASCADE,
         related_name="logistic_info",
@@ -235,7 +244,7 @@ class ProductLogisticInfo(models.Model):
 class Image(models.Model):
 
     product = models.ForeignKey(
-        'Product',
+        'product.Product',
         verbose_name='Produto',
         on_delete=models.CASCADE,
         null=True,
@@ -257,12 +266,6 @@ class Image(models.Model):
 
     )
 
-    is_main = models.BooleanField(
-        verbose_name='Imagem principal',
-        default=False,
-        help_text='Define se esta é a imagem principal do anúncio.'
-    )
-
     created_at = models.DateTimeField(
         verbose_name='Criado em',
         auto_now_add=True
@@ -280,7 +283,6 @@ class Image(models.Model):
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['product']),
-            models.Index(fields=['is_main']),
             models.Index(fields=['created_at']),
         ]
 
@@ -290,6 +292,18 @@ class Image(models.Model):
 
     def save(self, *args, **kwargs):
 
-        self.alt_text = f'Foto de {self.product.title} da {self.product.catalog.name} localizado(a) em {self.product.catalog.user.address}'
+        count_image_per_prod = Image.objects.filter(
+            product=self.product
+        ).count()
+
+        if count_image_per_prod >= 3 and not self.pk:
+
+            raise ValidationError('Este produto já possui o máximo de 3 imagens.')
+
+        if not self.alt_text:
+
+            self.alt_text = (
+                f'Foto de {self.product.title} da {self.product.catalog.name}'
+            )
 
         super().save(*args, **kwargs)

@@ -7,7 +7,6 @@ from .views import (
     UpgradeDowngradeSessionAPIView,
     StripeWebhookAPIView,
     PlanModelViewSet,
-    RemoveAccess4CanceledPlan
 )
 
 router = DefaultRouter()
@@ -19,6 +18,5 @@ urlpatterns = [
     path('success/', SuccessAPIView.as_view(), name='success'),
     path('cancel/', CancelAPIView.as_view(), name='cancel'),
     path('webhook/', StripeWebhookAPIView.as_view(), name='webhook'),
-    path('set-status-canceled-plan/', RemoveAccess4CanceledPlan.as_view(), name='remove'),
     path('', include(router.urls)),
 ]

@@ -3,7 +3,9 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 
 from api.catalog.models import Catalog
+from api.customer.models import Customer
 
+from django.utils import timezone
 class Coupon(models.Model):
 
     catalog = models.ForeignKey(
@@ -42,7 +44,8 @@ class Coupon(models.Model):
     start_date = models.DateTimeField(
         verbose_name="Data de início",
         null=True,
-        blank=True
+        blank=True,
+        default=timezone.now
     )
 
     end_date = models.DateTimeField(
@@ -60,6 +63,16 @@ class Coupon(models.Model):
         verbose_name="Atualizado em",
         auto_now=True
     )
+
+    @property
+    def discount_type(self):
+
+        return None
+
+    @property
+    def discount_value(self):
+
+        return None
 
     def is_valid(self):
 
@@ -84,9 +97,12 @@ class Coupon(models.Model):
             return False
 
         return True
+    
+    def calculate_discount(self, order_total):
+
+        return Decimal("0.00")
 
     class Meta:
-        abstract = True
         constraints = [
             models.UniqueConstraint(
                 fields=["catalog", "code"],
@@ -117,6 +133,16 @@ class CouponProgressive(Coupon):
         decimal_places=2,
         validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
+
+    @property
+    def discount_type(self):
+
+        return "progressive"
+
+    @property
+    def coupon_discount_value(self):
+
+        return self.percent_discount
 
     class Meta:
 
@@ -149,6 +175,16 @@ class CouponFixedValue(Coupon):
         null=True,
         blank=True
     )
+
+    @property
+    def discount_type(self):
+
+        return "fixed"
+
+    @property
+    def normalized_discount_value(self):
+        
+        return self.__dict__["discount_value"]
 
     class Meta:
 
@@ -190,6 +226,16 @@ class CouponPercentValue(Coupon):
         blank=True
     )
 
+    @property
+    def discount_type(self):
+
+        return "percentage"
+
+    @property
+    def coupon_discount_value(self):
+
+        return self.percent_discount
+
     class Meta:
 
         verbose_name = "Cupom com Valor Percentual"
@@ -228,6 +274,16 @@ class CouponFirstBuy(Coupon):
         blank=True
     )
 
+    @property
+    def discount_type(self):
+
+        return "first_buy"
+
+    @property
+    def coupon_discount_value(self):
+        
+        return self.percent_discount
+
     class Meta:
 
         verbose_name = "Cupom Primeira Compra"
@@ -241,3 +297,33 @@ class CouponFirstBuy(Coupon):
             return Decimal("0.00")
 
         return order_total * (self.percent_discount / Decimal("100"))
+    
+class CouponUsage(models.Model):
+
+    coupon = models.ForeignKey(
+        Coupon,
+        on_delete=models.CASCADE,
+        related_name="usages"
+    )
+
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        related_name="coupon_usages"
+    )
+
+    order = models.ForeignKey(
+        "order.Order",
+        on_delete=models.CASCADE,
+        related_name="coupon_usages",
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["coupon", "customer"]),
+        ]

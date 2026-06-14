@@ -8,10 +8,33 @@ from rest_framework.permissions import (
     SAFE_METHODS
 
 )
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.decorators import api_view, permission_classes, action
+
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils import timezone
+from django.conf import settings
+from django.contrib.auth import get_user_model
+
+from django_otp.plugins.otp_totp.models import TOTPDevice
+
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+
+from dj_rest_auth.registration.views import SocialLoginView
+
+import requests
+import os
+
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
+from .models import PasswordReset 
+from .utils import get_client_ip, get_user_agent
 from .serializers import (
     MyTokenObtainPairSerializer,
     RegisterSerializer,
@@ -20,33 +43,22 @@ from .serializers import (
     ResetPasswordSerializer
 )
 
-from django.contrib.auth import get_user_model
-from rest_framework.parsers import MultiPartParser, FormParser
 
-from django_otp.plugins.otp_totp.models import TOTPDevice
-from rest_framework.decorators import api_view, permission_classes
+from datetime import timedelta
 
-from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from dj_rest_auth.registration.views import SocialLoginView
-
-from django.conf import settings
-
-import requests
-
-from django.contrib.auth.tokens import PasswordResetTokenGenerator 
-from .models import PasswordReset 
-import os 
-
-from api.notification.utils import (
-    send_password_reset_email,
-    send_password_changed_email
+from api.notification.tasks import (
+    send_password_reset_email_task,
+    send_password_changed_email_task
 )
 
 User = get_user_model()
 
-class IsOwnerOrReadOnly(BasePermission):
-    
+class IsOwner(BasePermission):
+
+    def has_permission(self, request, view):
+
+        return request.user and request.user.is_authenticated
+
     def has_object_permission(self, request, view, obj):
 
         if request.method in SAFE_METHODS:
@@ -58,6 +70,7 @@ class IsOwnerOrReadOnly(BasePermission):
 class MyTokenObtainPairView(TokenObtainPairView):
 
     serializer_class = MyTokenObtainPairSerializer
+    permission_classes = [AllowAny]
 
 class RegisterView(generics.CreateAPIView):
     
@@ -90,11 +103,32 @@ class AccountViewSet(ModelViewSet):
 
     parser_classes = (MultiPartParser, FormParser)
     serializer_class = AccountSerializer
-    permission_classes = [IsOwnerOrReadOnly, AllowAny]
+    permission_classes = [IsOwner]
 
     def get_queryset(self):
 
-        return User.objects.all().order_by('-created_at')
+        return User.objects.filter(id=self.request.user.pk)
+    
+    @action(detail=False, methods=['get', 'put', 'patch', 'delete'])
+    def me(self, request):
+        user = request.user
+
+        if request.method == 'GET':
+            return Response(self.get_serializer(user).data)
+
+        if request.method in ['PUT', 'PATCH']:
+            serializer = self.get_serializer(
+                user,
+                data=request.data,
+                partial=(request.method == 'PATCH')
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+
+        if request.method == 'DELETE':
+            user.delete()
+            return Response(status=204)
 
 class LogoutAPIView(APIView):
 
@@ -115,7 +149,7 @@ class LogoutAPIView(APIView):
 
             return Response(status=status.HTTP_400_BAD_REQUEST)
         
-class GoogleLogin(SocialLoginView):
+'''class GoogleLogin(SocialLoginView):
 
     adapter_class = GoogleOAuth2Adapter
     callback_url = settings.GOOGLE_OAUTH_CALLBACK_URL
@@ -162,10 +196,8 @@ class GoogleLoginCallback(APIView):
         email = user_data.get("email")
         name = user_data.get("name")
 
-        # Criar ou autenticar o usuário no banco de dados
         user, created = User.objects.get_or_create(email=email, defaults={"name": name})
 
-        # Gerar tokens JWT para autenticação
         refresh = RefreshToken.for_user(user)
 
         return Response({
@@ -174,6 +206,49 @@ class GoogleLoginCallback(APIView):
             "user": {
                 "email": user.email,
                 "name": user.name,
+            }
+        })'''
+
+class GoogleLogin(APIView):
+
+    def post(self, request):
+
+        token = request.data.get("token")
+        token = token.replace(" ", "").replace("\n", "")
+
+
+        if not token:
+
+            return Response({"error": "Token não enviado"}, status=400)
+
+        try:
+
+            idinfo = id_token.verify_oauth2_token(
+                token,
+                requests.Request(),
+                settings.GOOGLE_OAUTH_CLIENT_ID
+            )
+
+        except ValueError:
+            
+            return Response({"error": "Token inválido"}, status=400)
+
+        email = idinfo.get("email")
+        username = idinfo.get("name")
+
+        user, _ = User.objects.get_or_create(
+            email=email,
+            defaults={"username": username}
+        )
+
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "user": {
+                "email": user.email,
+                "username": user.username,
             }
         })
 
@@ -226,18 +301,25 @@ class RequestPasswordReset(generics.GenericAPIView):
             token_generator = PasswordResetTokenGenerator()
             token = token_generator.make_token(user)
 
-            reset = PasswordReset(email=email, token=token)
+            reset = PasswordReset(
+                user=user,
+                email=email,
+                token=token,
+                expires_at=timezone.now() + timedelta(hours=1),
+                ip_address=get_client_ip(request),
+                user_agent=get_user_agent(request)
+            )
             reset.save()
 
-            if settings.DEBUG:
+            if not settings.DEBUG:
 
-                reset_url = f"https://exponere.com.br/{token}"
+                reset_url = f"https://exponere.com.br/auth/reset/password/update/{token}/"
 
             else:
 
-                reset_url = f"http://127.0.0.1:8000/{token}"
+                reset_url = f"http://127.0.0.1:8000/api/v1/auth/reset/password/update/{token}/"
 
-            send_password_reset_email(user, reset_url)
+            send_password_reset_email_task(user, reset_url)
 
             return Response(
                 {"success": "We have sent you a link to reset your password"},
@@ -262,26 +344,30 @@ class ResetPassword(generics.GenericAPIView):
 
         data = serializer.validated_data
         new_password = data["new_password"]
-        confirm_password = data["confirm_password"]
 
-        if new_password != confirm_password:
-            return Response({"error": "Passwords do not match"}, status=400)
-
-        reset_obj = PasswordReset.objects.filter(token=token).first()
+        reset_obj = PasswordReset.objects.filter(
+            token=token,
+            is_used=False
+        ).first()
 
         if not reset_obj:
+
             return Response({"error": "Invalid token"}, status=400)
 
         user = User.objects.filter(email=reset_obj.email).first()
 
         if not user:
+
             return Response({"error": "No user found"}, status=404)
 
         user.set_password(new_password)
         user.save()
 
-        reset_obj.delete()
+        reset_obj.is_used = True
+        reset_obj.used_at = timezone.now()
 
-        send_password_changed_email(user)
+        reset_obj.save()
 
-        return Response({"success": "Password updated"}, status=200)
+        send_password_changed_email_task(user)
+
+        return Response({"success": "Senha atualizada"}, status=200)

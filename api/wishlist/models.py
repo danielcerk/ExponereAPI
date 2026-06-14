@@ -47,12 +47,6 @@ class Wishlist(models.Model):
 			models.Index(fields=["session_key"]),
 			models.Index(fields=["created_at"]),
 		]
-		constraints = [
-			models.UniqueConstraint(
-				fields=["product", "session_key"],
-				name="unique_product_session_wishlist"
-			),
-		]
 
 	def __str__(self):
 

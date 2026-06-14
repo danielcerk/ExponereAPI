@@ -10,7 +10,6 @@ class ImageInline(admin.TabularInline):
 
     fields = (
         "image",
-        "is_main",
         "created_at",
         "updated_at",
     )
@@ -71,6 +70,7 @@ class ProductAdmin(admin.ModelAdmin):
 
     filter_horizontal = (
         "category",
+        "subcategory"
     )
 
     inlines = [
@@ -134,12 +134,10 @@ class ImageAdmin(admin.ModelAdmin):
     list_display = (
         "product",
         "alt_text",
-        "is_main",
         "created_at",
     )
 
     list_filter = (
-        "is_main",
         "created_at",
     )
 

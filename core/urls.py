@@ -1,13 +1,14 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import TemplateView
+from django_otp.admin import OTPAdminSite
+from django.conf import settings
 
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from django.views.generic import TemplateView
+if not settings.DEBUG:
 
-'''from django_otp.admin import OTPAdminSite
-
-admin.site.__class__ = OTPAdminSite'''
+    admin.site.__class__ = OTPAdminSite
 
 urlpatterns = [
 

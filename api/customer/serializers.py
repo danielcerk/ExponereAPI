@@ -1,12 +1,18 @@
 from rest_framework import serializers
+
 from django.utils.text import slugify
+from django.shortcuts import get_object_or_404
+
 import re
 
-from .models import Customer
+from api.customer.models import Customer
+from api.address.models import Address
+from api.address.serializers import AddressSerializer
 
 class CustomerSerializer(serializers.ModelSerializer):
 
     full_name = serializers.CharField(read_only=True)
+    address = AddressSerializer(required=True)
 
     class Meta:
         model = Customer
@@ -15,9 +21,19 @@ class CustomerSerializer(serializers.ModelSerializer):
             'id',
             'slug',
             'full_name',
+            'session_key',
             'created_at',
             'updated_at'
         )
+
+        extra_kwargs = {
+
+            'session_key': {'required': False},
+            "is_active": {'required': False},
+            "catalog": {'required': False},
+            "cpf_cnpj": {"validators": []},
+
+        }
 
     def validate_first_name(self, value):
 
@@ -55,22 +71,6 @@ class CustomerSerializer(serializers.ModelSerializer):
             
         return value
 
-    def validate_cpf_cnpj(self, value):
-
-        if value:
-
-            value = value.strip()
-
-            if Customer.objects.filter(cpf_cnpj=value).exclude(
-                pk=self.instance.pk if self.instance else None
-            ).exists():
-                
-                raise serializers.ValidationError(
-                    "CPF/CNPJ já cadastrado."
-                )
-            
-        return value
-
     def validate(self, data):
 
         first_name = data.get("first_name", getattr(self.instance, "first_name", ""))
@@ -86,6 +86,16 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
 
+        request = self.context.get("request")
+
+        session = request.session
+
+        if not session.session_key:
+
+            session.save()
+
+        address_data = validated_data.pop("address", None)
+
         first_name = validated_data.get("first_name", "") or ""
         last_name = validated_data.get("last_name", "") or ""
 
@@ -93,10 +103,37 @@ class CustomerSerializer(serializers.ModelSerializer):
 
         validated_data["full_name"] = full_name
         validated_data["slug"] = slugify(full_name)
+        validated_data["session_key"] = session.session_key
 
-        return super().create(validated_data)
+        cpf_cnpj = validated_data.get("cpf_cnpj")
+
+        customer = None
+
+        if cpf_cnpj:
+
+            customer = Customer.objects.filter(cpf_cnpj=cpf_cnpj).first()
+
+        if address_data:
+
+            address = Address.objects.create(**address_data)
+
+            validated_data["address"] = address
+
+        if customer:
+
+            for attr, value in validated_data.items():
+
+                setattr(customer, attr, value)
+
+            customer.save()
+
+            return customer
+
+        return Customer.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
+
+        address_data = validated_data.pop("address", None)
 
         first_name = validated_data.get("first_name", instance.first_name or "")
         last_name = validated_data.get("last_name", instance.last_name or "")
@@ -106,4 +143,24 @@ class CustomerSerializer(serializers.ModelSerializer):
         validated_data["full_name"] = full_name
         validated_data["slug"] = slugify(full_name)
 
-        return super().update(instance, validated_data)
+        for attr, value in validated_data.items():
+
+            setattr(instance, attr, value)
+
+        if address_data:
+
+            if instance.address:
+
+                for attr, value in address_data.items():
+
+                    setattr(instance.address, attr, value)
+
+                instance.address.save()
+
+            else:
+
+                instance.address = Address.objects.create(**address_data)
+
+        instance.save()
+
+        return instance

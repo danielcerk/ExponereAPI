@@ -1,8 +1,16 @@
 from django.db import models
 
-from cities_light.models import SubRegion, Region
+from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 
-from .utils import verify_cep
+from .utils import ( 
+    
+    verify_cep, 
+    validate_no_repeated_digits,
+    get_cities,
+    get_states
+
+)
 
 class Address(models.Model):
 
@@ -19,8 +27,17 @@ class Address(models.Model):
     )
 
     cep = models.CharField(
-        max_length=8, verbose_name='CEP',
-        null=True, blank=True
+        max_length=8,
+        verbose_name='CEP',
+        null=True,
+        blank=True,
+        validators=[
+            RegexValidator(
+                regex=r'^\d{8}$',
+                message='O CEP deve conter exatamente 8 números (sem hífen ou letras).'
+            ),
+            validate_no_repeated_digits
+        ]
     )
 
     complement = models.TextField(
@@ -28,18 +45,20 @@ class Address(models.Model):
         verbose_name='Complemento'
     )
 
-    city = models.ForeignKey(
-        SubRegion,
-        on_delete=models.SET_NULL,
-        null=True, blank=True,
-        verbose_name='Cidade'
+    city = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name="Cidade",
+        choices=get_cities()
     )
 
-    state = models.ForeignKey(
-        Region,
-        on_delete=models.SET_NULL,
-        null=True, blank=True,
-        verbose_name='Estado'
+    state = models.CharField(
+        max_length=2,
+        null=True,
+        blank=True,
+        verbose_name="UF",
+        choices=get_states()
     )
 
     full_address = models.CharField(
@@ -48,36 +67,63 @@ class Address(models.Model):
         max_length=255
     )
 
+    def clean(self):
+
+        if self.cep:
+            cleaned = ''.join(filter(str.isdigit, self.cep))
+
+            if not cleaned:
+                raise ValidationError({'cep': 'CEP inválido'})
+
+            self.cep = cleaned
+
     def save(self, *args, **kwargs):
 
-        cep = self.cep
-        address = verify_cep(cep)
+        self.full_clean()
 
-        if cep and address:
+        if self.cep:
 
-            self.street = address['logradouro']
-            self.neighborhood = address['bairro']
+            try:
 
-            region = Region.objects.filter(name=address['estado']).first()
+                address = verify_cep(self.cep)
 
-            city_obj = None
+                if not address or address.get("erro") == "true":
 
-            if region:
+                    raise ValidationError({"cep": "CEP inválido ou não encontrado."})
 
-                city_obj = SubRegion.objects.filter(name=address['localidade'], region=region).first()
+                self.street = address.get("logradouro")
+                self.neighborhood = address.get("bairro")
 
-            else:
+                city_obj = get_cities(name=address.get("localidade"))
 
-                city_obj = SubRegion.objects.filter(name=address['localidade']).first()
+                if city_obj:
 
-            self.city = city_obj
-            self.state = region
+                    self.city = city_obj["Nome"]
 
-        self.full_address = f'{self.street or ""}, {self.neighborhood or ""}, {self.complement or ""}, {self.city or ""}, {self.state or ""} - {cep or ""}'.strip(', -')
+                state_obj = get_states(UF=address.get("uf"))
+
+                if state_obj:
+
+                    self.state = state_obj["Uf"]
+
+            except Exception as e:
+                
+                raise ValidationError({
+                    "cep": f"Erro ao validar CEP: {str(e)}"
+                })
+
+        parts = [
+            self.street,
+            self.neighborhood,
+            self.complement,
+            self.city,
+            self.state,
+            self.cep
+        ]
+
+        self.full_address = ", ".join(filter(None, parts))
 
         super().save(*args, **kwargs)
-
-
 
     class Meta:
 

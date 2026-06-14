@@ -1,24 +1,73 @@
-from PIL import Image
-from io import BytesIO
+import re
+from django.core.exceptions import ValidationError
 
-def img_compression(img_path):
+def validate_no_repeated_chars(value):
 
-    img = Image.open(img_path)
+    cleaned = re.sub(r'\D', '', value)
 
-    img = img.resize(
-        (int(img.size[0] * 0.55), int(img.size[1] * 0.55)),
-        Image.LANCZOS
-    )
+    if not cleaned:
 
-    buffer = BytesIO()
+        raise ValidationError('Documento inválido.')
 
-    img.save(
-        buffer,
-        format="PNG",
-        optimize=True,
-        quality=95
-    )
+    if cleaned == cleaned[0] * len(cleaned):
+        raise ValidationError('Inválido: caracteres repetidos.')
 
-    buffer.seek(0)
+    most_common = max(set(cleaned), key=cleaned.count)
 
-    return buffer
+    if cleaned.count(most_common) >= len(cleaned) - 1:
+
+        raise ValidationError('Inválido: padrão suspeito.')
+
+    if cleaned in '0123456789' or cleaned in '9876543210':
+
+        raise ValidationError('Inválido: sequência numérica.')
+
+    for size in range(1, len(cleaned)//2 + 1):
+
+        pattern = cleaned[:size]
+
+        if pattern * (len(cleaned)//size) == cleaned:
+
+            raise ValidationError('Inválido: padrão repetitivo.')
+
+    if len(cleaned) == 11:
+
+        for i in range(9, 11):
+
+            soma = sum(int(cleaned[num]) * ((i+1) - num) for num in range(i))
+            digito = ((soma * 10) % 11) % 10
+
+            if int(cleaned[i]) != digito:
+
+                raise ValidationError('CPF inválido.')
+
+        return cleaned
+
+    elif len(cleaned) == 14:
+
+        pesos_1 = [5,4,3,2,9,8,7,6,5,4,3,2]
+        pesos_2 = [6] + pesos_1
+
+        soma = sum(int(cleaned[i]) * pesos_1[i] for i in range(12))
+        dig1 = 11 - (soma % 11)
+        dig1 = dig1 if dig1 < 10 else 0
+
+        soma = sum(int(cleaned[i]) * pesos_2[i] for i in range(13))
+        dig2 = 11 - (soma % 11)
+        dig2 = dig2 if dig2 < 10 else 0
+
+        if int(cleaned[12]) != dig1 or int(cleaned[13]) != dig2:
+
+            raise ValidationError('CNPJ inválido.')
+
+        return cleaned
+
+    else:
+        
+        raise ValidationError('Documento deve ser CPF ou CNPJ válido.')
+    
+def validate_not_empty_url(value):
+
+    if not value or not str(value).strip():
+        
+        raise ValidationError("Informe uma URL válida.")

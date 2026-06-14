@@ -99,7 +99,7 @@ class CheckoutSessionRecordAdmin(admin.ModelAdmin):
     )
 
     search_fields = (
-        'user__name',
+        'user__username',
         'user__email',
         'stripe_customer_id',
         'stripe_checkout_session_id',

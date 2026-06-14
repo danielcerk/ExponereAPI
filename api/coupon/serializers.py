@@ -1,11 +1,11 @@
 from rest_framework import serializers
-from django.utils import timezone
 
 from .models import (
     CouponProgressive,
     CouponFixedValue,
     CouponPercentValue,
-    CouponFirstBuy
+    CouponFirstBuy,
+    CouponUsage
 )
 
 class BaseCouponSerializer(serializers.ModelSerializer):
@@ -15,7 +15,6 @@ class BaseCouponSerializer(serializers.ModelSerializer):
     class Meta:
         fields = [
             "id",
-            "catalog",
             "name",
             "code",
             "is_active",
@@ -26,23 +25,39 @@ class BaseCouponSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "is_valid_coupon",
+            "min_purchase_value"
         ]
-        read_only_fields = ("usage_count", "created_at", "updated_at")
+        read_only_fields = (
+            "id",
+            "catalog",
+            "usage_count", 
+            "created_at", 
+            "updated_at"
+        )
+
+        extra_kwargs = {
+
+            "is_active": {"required": False},
+            "is_valid_coupon": {"required": False}
+
+        }
 
     def get_is_valid_coupon(self, obj):
+
         return obj.is_valid()
 
     def validate(self, data):
+
         start_date = data.get("start_date")
         end_date = data.get("end_date")
 
         if start_date and end_date and start_date > end_date:
+            
             raise serializers.ValidationError(
                 "A data de início não pode ser maior que a data de expiração."
             )
 
         return data
-
 
 class CouponProgressiveSerializer(BaseCouponSerializer):
 
@@ -68,7 +83,6 @@ class CouponProgressiveSerializer(BaseCouponSerializer):
             )
 
         return data
-
 
 class CouponFixedValueSerializer(BaseCouponSerializer):
 
@@ -104,7 +118,6 @@ class CouponPercentValueSerializer(BaseCouponSerializer):
 
         return data
 
-
 class CouponFirstBuySerializer(BaseCouponSerializer):
 
     class Meta(BaseCouponSerializer.Meta):
@@ -114,3 +127,34 @@ class CouponFirstBuySerializer(BaseCouponSerializer):
             "percent_discount",
             "min_purchase_value",
         ]
+
+class CouponUsageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = CouponUsage
+        fields = '__all__'
+
+        read_only_fields = ("coupon", "customer", "order", "created_at", "updated_at")
+
+class CouponDynamicSerializer(serializers.Serializer):
+
+    def to_representation(self, instance):
+
+        if hasattr(instance, "couponprogressive"):
+
+            return CouponProgressiveSerializer(instance.couponprogressive).data
+
+        if hasattr(instance, "couponfixedvalue"):
+
+            return CouponFixedValueSerializer(instance.couponfixedvalue).data
+
+        if hasattr(instance, "couponpercentvalue"):
+
+            return CouponPercentValueSerializer(instance.couponpercentvalue).data
+
+        if hasattr(instance, "couponfirstbuy"):
+            
+            return CouponFirstBuySerializer(instance.couponfirstbuy).data
+
+        return None

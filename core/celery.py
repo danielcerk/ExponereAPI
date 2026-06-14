@@ -1,3 +1,7 @@
+# Para local, windows: python -m celery -A core worker -l info -P solo | python -m celery -A core beat -l info
+# Para produção, linux: python -m celery -A core worker -B -l info -P solo
+
+
 import os
 
 from celery import Celery
@@ -9,8 +13,3 @@ app = Celery('core')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
 app.autodiscover_tasks()
-
-@app.task(bind=True, ignore_result=True)
-def debug_task(self):
-
-    print(f'Request: {self.request!r}')

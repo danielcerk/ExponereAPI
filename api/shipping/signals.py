@@ -1,3 +1,2 @@
 
-# Signals servirá para enviar emails
-# No futuro, mensagens no zap
+# Signals ou celery + redis servirá para acompanhar status e enviar emails

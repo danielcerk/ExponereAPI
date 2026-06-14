@@ -8,11 +8,19 @@ from django.utils.translation import gettext_lazy as _
 from datetime import date
 
 from api.address.models import Address
+from api.utils import validate_no_repeated_chars
 
 from django.utils import timezone
 import uuid
 
 from django.conf import settings
+
+cpf_cnpj_validator = RegexValidator(
+
+    regex=r'^[A-Za-z0-9./-]{11,18}$',
+    message='Digite um CPF ou CNPJ válido (alfanumérico permitido).'
+
+)
 
 class UserManager(BaseUserManager):
 
@@ -111,7 +119,7 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(
         max_length=10,
         choices=ROLE_CHOICES,
-        default="reader"
+        default="admin"
     )
 
     catalog = models.ForeignKey(
@@ -169,10 +177,8 @@ class Profile(models.Model):
         verbose_name='CPF ou CNPJ',
         max_length=18,
         validators=[
-            RegexValidator(
-                regex=r'^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$',
-                message='Digite um CPF (XXX.XXX.XXX-XX) ou CNPJ (XX.XXX.XXX/XXXX-XX) válido'
-            )
+            cpf_cnpj_validator,
+            validate_no_repeated_chars
         ],
         unique=True,
         null=True,
@@ -192,7 +198,7 @@ class Profile(models.Model):
             RegexValidator(
                 regex=r'^\+?55\d{10,11}$',
                 message='Digite um número válido com DDD (ex: +5511999999999)'
-            )
+            ),
         ],
         null=True,
         blank=True
@@ -244,16 +250,13 @@ class PasswordReset(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="password_resets"
+        related_name="password_resets",
+        null=True
     )
 
     email = models.EmailField()
 
-    token = models.UUIDField(
-        default=uuid.uuid4,
-        unique=True,
-        editable=False
-    )
+    token = models.CharField(max_length=255, unique=True)
 
     is_used = models.BooleanField(
         default=False

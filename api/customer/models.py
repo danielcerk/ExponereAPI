@@ -23,6 +23,10 @@ class Customer(models.Model):
 		db_index=True
 	)
 
+    email = models.EmailField(
+        null=True, blank=True
+    )
+
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=150, blank=True, null=True)
     full_name = models.CharField(max_length=255, blank=True, null=True)
@@ -60,16 +64,17 @@ class Customer(models.Model):
         blank=True
     )
 
-    address = models.ForeignKey(
+    address = models.OneToOneField(
          
         Address, on_delete=models.SET_NULL,
-        verbose_name='Endereço', null=True
+        verbose_name='Endereço', null=True,
+        related_name='address_customer'
 
     )
 
     is_integration = models.BooleanField(
         verbose_name="vem de uma integração?",
-        default=True,
+        default=False,
     )
 
     is_active = models.BooleanField(

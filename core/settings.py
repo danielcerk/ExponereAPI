@@ -24,7 +24,8 @@ if not DEBUG:
 
         '127.0.0.1',
         'localhost',
-        'exponere.com.br'
+        'exponere.com.br',
+        'api.exponere.com.br'
 
     ]
 

@@ -97,7 +97,6 @@ def get_article_by_slug(slug: str) -> Dict:
 
     data = _make_request(url)
 
-    print(data)
 
     if "error" in data:
         

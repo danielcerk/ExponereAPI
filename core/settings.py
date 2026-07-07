@@ -24,7 +24,6 @@ if not DEBUG:
 
         'exponere.com.br',
         'api.exponere.com.br',
-        'exponere-7ievz3dav-dcgo15s-projects.vercel.app'
 
     ]
 

@@ -17,7 +17,7 @@ def _make_request(url: str) -> Dict:
                 "Accept": "application/json",
                 "Authorization": f"Bearer {API_KEY}",
             },
-            timeout=10
+            timeout=50
         )
 
         response.raise_for_status()
@@ -30,9 +30,9 @@ def _make_request(url: str) -> Dict:
 
 
 def _format_article(article: Dict) -> Dict:
-    
+    cover = article.get("cover")
+
     return {
-        
         "id": article.get("id"),
         "document_id": article.get("documentId"),
         "title": article.get("title"),
@@ -42,8 +42,26 @@ def _format_article(article: Dict) -> Dict:
         "updated_at": article.get("updatedAt"),
         "published_at": article.get("publishedAt"),
 
-    }
+        "cover": {
+            "id": cover.get("id"),
+            "name": cover.get("name"),
+            "url": cover.get("url"),
+            "width": cover.get("width"),
+            "height": cover.get("height"),
+        } if cover else None,
 
+        "author": article.get("author"),
+
+        "category": article.get("category"),
+
+        "blocks": [
+            {
+                "component": block.get("__component"),
+                "body": block.get("body")
+            }
+            for block in article.get("blocks", [])
+        ]
+    }
 
 def get_all_articles(
     sort: Optional[str] = None,
@@ -75,9 +93,11 @@ def get_all_articles(
 
 def get_article_by_slug(slug: str) -> Dict:
 
-    url = f"{API_URL}?filters[slug][$eq]={slug}"
+    url = f"{API_URL}?filters[slug][$eq]={slug}&populate=*"
 
     data = _make_request(url)
+
+    print(data)
 
     if "error" in data:
         

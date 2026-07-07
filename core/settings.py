@@ -22,8 +22,6 @@ if not DEBUG:
 
     ALLOWED_HOSTS = [
 
-        '127.0.0.1',
-        'localhost',
         'exponere.com.br',
         'api.exponere.com.br',
         'exponere-7ievz3dav-dcgo15s-projects.vercel.app'

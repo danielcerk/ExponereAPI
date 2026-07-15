@@ -64,30 +64,27 @@ def _format_article(article: Dict) -> Dict:
     }
 
 def get_all_articles(
-    sort: Optional[str] = None,
     page: int = 1,
     page_size: int = 25
 ) -> Dict:
 
-    url = f"{API_URL}?pagination[page]={page}&pagination[pageSize]={page_size}"
-
-    if sort:
-        
-        url += f"&sort[0]={sort}"
+    url = (
+        f"{API_URL}"
+        f"?pagination[page]={page}"
+        f"&pagination[pageSize]={page_size}"
+        f"&sort[0]=publishedAt:desc"
+    )
 
     data = _make_request(url)
 
     if "error" in data:
-        
         return data
 
     articles = [_format_article(item) for item in data.get("data", [])]
 
     return {
-        
         "articles": articles,
         "pagination": data.get("meta", {}).get("pagination", {})
-
     }
 
 

@@ -61,8 +61,11 @@ INSTALLED_APPS = [
     'api.customer',
     'api.ecommerce',
     'api.erp',
+    'api.feedback',
     'api.financial',
+    'api.launch',
     'api.marketing',
+    'api.marketing_launch',
     'api.newsletter',
     'api.nf',
     'api.notification',
@@ -448,7 +451,7 @@ MELHOR_ENVIO_ACCESS_TOKEN = os.getenv('MELHOR_ENVIO_ACCESS_TOKEN')
 CELERY_BEAT_SCHEDULE = {
     "disable-expired-coupons": {
         "task": "api.coupon.tasks.disable_expired_coupons",
-        "schedule": crontab(),
+        "schedule": crontab(hour=11, minute=59),
     },
     "disable-canceled-plans": {
         "task": "api.subscription.tasks.disable_canceled_plans",

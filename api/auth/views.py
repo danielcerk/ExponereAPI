@@ -11,7 +11,10 @@ from rest_framework.permissions import (
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import (
+    RefreshToken,
+    TokenError,
+)
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, action
 
@@ -130,84 +133,69 @@ class AccountViewSet(ModelViewSet):
             user.delete()
             return Response(status=204)
 
-class LogoutAPIView(APIView):
+class LogoutAPIView(
+    APIView
+):
 
-    permission_classes = (AllowAny,)
+    permission_classes = (
+        IsAuthenticated,
+    )
 
-    def post(self, request):
+    def post(
+        self,
+        request
+    ):
+
+        refresh_token = (
+            request.data.get(
+                "refresh_token"
+            )
+        )
+
+        if not refresh_token:
+
+            return Response(
+                {
+                    "detail":
+                    "Refresh token é obrigatório."
+                },
+                status=(
+                    status
+                    .HTTP_400_BAD_REQUEST
+                ),
+            )
 
         try:
 
-            refresh_token = request.data['refresh_token']
+            token = RefreshToken(
+                refresh_token
+            )
 
-            token = RefreshToken(refresh_token)
             token.blacklist()
 
-            return Response(status=status.HTTP_205_RESET_CONTENT)
-        
-        except Exception as e:
+            return Response(
+                {
+                    "detail":
+                    "Logout realizado com sucesso."
+                },
+                status=(
+                    status
+                    .HTTP_205_RESET_CONTENT
+                ),
+            )
 
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        
-'''class GoogleLogin(SocialLoginView):
+        except TokenError:
 
-    adapter_class = GoogleOAuth2Adapter
-    callback_url = settings.GOOGLE_OAUTH_CALLBACK_URL
-    client_class = OAuth2Client
-
-class GoogleLoginCallback(APIView):
-
-    def get(self, request, *args, **kwargs):
-
-        code = request.GET.get("code")
-
-        if code is None:
-
-            return Response({"error": "Código de autenticação não encontrado"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        token_url = "https://oauth2.googleapis.com/token"
-        data = {
-            "code": code,
-            "client_id": settings.GOOGLE_OAUTH_CLIENT_ID,
-            "client_secret": settings.GOOGLE_OAUTH_CLIENT_SECRET,
-            "redirect_uri": settings.GOOGLE_OAUTH_CALLBACK_URL,
-            "grant_type": "authorization_code",
-        }
-
-        response = requests.post(token_url, data=data)
-
-        if response.status_code != 200:
-
-            return Response({"error": "Erro ao obter o token", "content": response.text}, status=status.HTTP_400_BAD_REQUEST)
-
-        token_data = response.json()
-        access_token = token_data.get("access_token")
-
-        user_info_url = "https://www.googleapis.com/oauth2/v2/userinfo"
-        headers = {"Authorization": f"Bearer {access_token}"}
-        user_info_response = requests.get(user_info_url, headers=headers)
-
-        if user_info_response.status_code != 200:
-
-            return Response({"error": "Erro ao obter informações do usuário"}, status=status.HTTP_400_BAD_REQUEST)
-
-        user_data = user_info_response.json()
-
-        email = user_data.get("email")
-        name = user_data.get("name")
-
-        user, created = User.objects.get_or_create(email=email, defaults={"name": name})
-
-        refresh = RefreshToken.for_user(user)
-
-        return Response({
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-            "user": {
-                "email": user.email,
-                "name": user.name,
-            }
-        })'''
+            return Response(
+                {
+                    "detail":
+                    "Refresh token inválido."
+                },
+                status=(
+                    status
+                    .HTTP_400_BAD_REQUEST
+                ),
+            )
 
 class GoogleLogin(APIView):
 

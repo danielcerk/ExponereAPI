@@ -123,7 +123,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = '__all__'
         read_only_fields = (
-            'id', 'slug', 'catalog', 'is_active', 'created_at', 'updated_at'
+            'id', 'slug', 'catalog', 'created_at', 'updated_at'
         )
 
     def validate(self, data):

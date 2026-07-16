@@ -1,10 +1,19 @@
 from django.urls import path
+
 from .views import (
     MarketingLaunchCreateView,
-    MarketingLaunchListView
+    MarketingLaunchListView,
 )
 
 urlpatterns = [
-    path("", MarketingLaunchCreateView.as_view(), name="newsletter-create"),
-    path("list/", MarketingLaunchListView.as_view(), name="newsletter-list"),
+    path(
+        "<slug:slug>/",
+        MarketingLaunchCreateView.as_view(),
+        name="marketing-launch-create",
+    ),
+    path(
+        "list/",
+        MarketingLaunchListView.as_view(),
+        name="marketing-launch-list",
+    ),
 ]

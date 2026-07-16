@@ -42,9 +42,6 @@ class CampaignMarketingLaunchAdmin(admin.ModelAdmin):
         "updated_at",
     )
 
-    prepopulated_fields = {
-        "slug": ("name",),
-    }
 
     fieldsets = (
         (

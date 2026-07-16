@@ -73,6 +73,7 @@ class CampaignMarketingLaunch(models.Model):
 class MarketingLaunch(models.Model):
 
     class RevenueChoices(models.TextChoices):
+        
         UP_TO_5K = "UP_TO_5K", "Até R$ 5 mil/mês"
         FROM_5K_TO_10K = "FROM_5K_TO_10K", "De R$ 5 mil a R$ 10 mil/mês"
         FROM_10K_TO_30K = "FROM_10K_TO_30K", "De R$ 10 mil a R$ 30 mil/mês"
@@ -88,26 +89,23 @@ class MarketingLaunch(models.Model):
     whatsapp = models.CharField(
         verbose_name="WhatsApp",
         max_length=20,
-        validators=[
-            RegexValidator(
-                regex=r"^\+?55\d{10,11}$",
-                message="Digite um número válido com DDD (ex: +5511999999999)",
-            ),
-        ],
-        blank=True,
+        blank=False,
+        null=False
     )
 
     monthly_revenue = models.CharField(
         verbose_name="Faturamento mensal",
         max_length=30,
         choices=RevenueChoices.choices,
-        blank=True,
+        blank=False,
+        null=False
     )
 
     campaign_marketing = models.ForeignKey(
         CampaignMarketingLaunch,
         on_delete=models.CASCADE,
         related_name="leads",
+        null=True
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

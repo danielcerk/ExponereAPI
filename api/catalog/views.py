@@ -55,6 +55,10 @@ class CatalogViewSet(ModelViewSet):
 
         return Catalog.objects.all()
     
+    def perform_create(self, serializer):
+
+        serializer.save(user=self.request.user)
+    
     @action(detail=False, methods=['get', 'put', 'patch', 'delete'])
     def my(self, request):
 

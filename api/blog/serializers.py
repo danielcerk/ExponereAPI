@@ -14,7 +14,7 @@ class ArticlesSerializer(serializers.Serializer):
             sort = self.context.get("sort")
             page = self.context.get("page", 1)
 
-            self._cached_data = get_all_articles(sort=sort, page=page)
+            self._cached_data = get_all_articles(page=page)
 
         return self._cached_data
 

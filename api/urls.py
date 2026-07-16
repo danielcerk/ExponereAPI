@@ -18,5 +18,8 @@ urlpatterns = [
     path('status/', include('api.status.urls')),
     path('panel/subscription/', include('api.subscription.urls')),
     path('newsletter/', include('api.newsletter.urls')),
+    path('feedback/', include('api.feedback.urls')),
+    path('launch/', include('api.launch.urls')),
+    path('marketing/launch/', include('api.marketing_launch.urls')),
 
 ]

@@ -10,7 +10,7 @@ def create_analytic_catalog_user(sender, instance, created, **kwargs):
 
     if not created:
 
-        analytic_catalog_route = AnalyticRoute.objects.create(
+        analytic_catalog_route = AnalyticRoute.objects.update_or_create(
 
             catalog=instance, slug=instance.slug
             

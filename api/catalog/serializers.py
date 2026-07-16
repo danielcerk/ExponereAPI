@@ -140,7 +140,12 @@ class CatalogSerializer(serializers.ModelSerializer):
         photo_file = validated_data.pop("photo_file", None)
         banner_file = validated_data.pop("banner_file", None)
 
+        user = validated_data['user']
+
         catalog = Catalog.objects.create(**validated_data)
+
+        user.catalog = catalog
+        user.save(update_fields=['catalog'])
 
         if photo_file:
 

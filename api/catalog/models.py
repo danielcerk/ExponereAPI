@@ -7,6 +7,8 @@ from django.utils.text import slugify
 from api.utils import validate_not_empty_url
 from api.category.models import BusinessCategory
 
+from urllib.parse import urlparse
+
 import re
 
 from decimal import Decimal
@@ -101,6 +103,7 @@ class Link(models.Model):
         ("youtube", "YouTube"),
         ("linkedin", "LinkedIn"),
         ("x", "X/Twitter"),
+        ("whatsapp", "WhatsApp"),
         ("site", "Site"),
         ("outro", "Outro"),
     )
@@ -132,21 +135,49 @@ class Link(models.Model):
 
     def detect_social_network(self):
 
-        patterns = {
+        try:
 
-            "instagram": r"(https?:\/\/)?(www\.)?instagram\.com\/",
-            "facebook": r"(https?:\/\/)?(www\.)?facebook\.com\/",
-            "tiktok": r"(https?:\/\/)?(www\.)?tiktok\.com\/",
-            "youtube": r"(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/",
-            "linkedin": r"(https?:\/\/)?(www\.)?linkedin\.com\/",
-            "x": r"(https?:\/\/)?(www\.)?(x\.com|twitter\.com)\/",
+            hostname = (urlparse(self.url).hostname or "").lower()
 
+        except Exception:
+
+            return "site"
+
+        hostname = hostname.removeprefix("www.")
+
+        domains = {
+            "instagram": [
+                "instagram.com",
+            ],
+            "facebook": [
+                "facebook.com",
+                "fb.com",
+            ],
+            "tiktok": [
+                "tiktok.com",
+            ],
+            "youtube": [
+                "youtube.com",
+                "youtu.be",
+            ],
+            "linkedin": [
+                "linkedin.com",
+            ],
+            "x": [
+                "x.com",
+                "twitter.com",
+            ],
+            "whatsapp": [
+                "whatsapp.com",
+                "wa.me",
+            ],
         }
 
-        for social, pattern in patterns.items():
-
-            if re.search(pattern, self.url):
-
+        for social, hosts in domains.items():
+            if any(
+                hostname == host or hostname.endswith(f".{host}")
+                for host in hosts
+            ):
                 return social
 
         return "site"

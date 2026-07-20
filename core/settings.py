@@ -52,7 +52,7 @@ INSTALLED_APPS = [
 
     'api',
     'api.address',
-    #'api.AI',
+    'api.AI',
     'api.analytic',
     'api.auth',
     'api.blog',

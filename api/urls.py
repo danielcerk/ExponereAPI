@@ -4,7 +4,7 @@ urlpatterns = [
 
     path('auth/', include('api.auth.urls')),
     path('blog/', include('api.blog.urls')),
-    #path('catalogs/', include('api.AI.urls')),
+    path('catalogs/', include('api.AI.urls')),
     path('catalogs/', include('api.catalog.urls')),
     path('', include('api.category.urls')),
     path('catalogs/', include('api.coupon.urls')),

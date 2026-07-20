@@ -194,12 +194,6 @@ class Profile(models.Model):
     whatsapp = models.CharField(
         verbose_name='WhatsApp',
         max_length=20,
-        validators=[
-            RegexValidator(
-                regex=r'^\+?55\d{10,11}$',
-                message='Digite um número válido com DDD (ex: +5511999999999)'
-            ),
-        ],
         null=True,
         blank=True
     )

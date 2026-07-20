@@ -52,7 +52,7 @@ INSTALLED_APPS = [
 
     'api',
     'api.address',
-    'api.AI',
+    #'api.AI',
     'api.analytic',
     'api.auth',
     'api.blog',
@@ -164,27 +164,6 @@ else:
             'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
         }
     }
-
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-
-    SECURE_REFERRER_POLICY = 'same-origin'
-
-    SESSION_COOKIE_HTTPONLY = True
-    CSRF_COOKIE_HTTPONLY = True
-
-    SESSION_COOKIE_SAMESITE = 'Lax'
-    CSRF_COOKIE_SAMESITE = 'Lax'
-
-    CMS_TOOLBAR_ANONYMOUS_ON = False
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -367,6 +346,27 @@ else:
     STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_PROD_WEBHOOK_SECRET')
 
     SITE_URL = 'https://exponere.com.br'
+
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    SECURE_REFERRER_POLICY = 'same-origin'
+
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_HTTPONLY = True
+
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SAMESITE = 'Lax'
+
+    CMS_TOOLBAR_ANONYMOUS_ON = False
     
 STRIPE_PLAN_NECESSARIO=os.getenv('STRIPE_PLAN_NECESSARIO')
 STRIPE_PLAN_ALCANCE=os.getenv('STRIPE_PLAN_ALCANCE')

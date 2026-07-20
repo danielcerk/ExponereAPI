@@ -105,7 +105,7 @@ def get_route_chart_data(
             filter=Filter(
                 field_name="pagePath",
                 string_filter=Filter.StringFilter(
-                    value=f"/{slug}",
+                    value=f"/loja/{slug}",
                     match_type=Filter.StringFilter.MatchType.CONTAINS
                 )
             )

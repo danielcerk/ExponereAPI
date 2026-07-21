@@ -28,8 +28,13 @@ from django_otp.plugins.otp_totp.models import TOTPDevice
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 
+from google_auth_oauthlib.flow import Flow
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
 from dj_rest_auth.registration.views import SocialLoginView
 
+import traceback
 import requests
 import os
 
@@ -200,33 +205,54 @@ class LogoutAPIView(
 class GoogleLogin(APIView):
 
     def post(self, request):
+        code = request.data.get("code")
 
-        token = request.data.get("token")
-        token = token.replace(" ", "").replace("\n", "")
+        if not code:
+            return Response({"error": "Código não enviado"}, status=400)
 
-
-        if not token:
-
-            return Response({"error": "Token não enviado"}, status=400)
+        flow = Flow.from_client_config(
+            {
+                "web": {
+                    "client_id": settings.GOOGLE_OAUTH_CLIENT_ID,
+                    "client_secret": settings.GOOGLE_OAUTH_CLIENT_SECRET,
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                }
+            },
+            scopes=[
+                "openid",
+                "https://www.googleapis.com/auth/userinfo.email",
+                "https://www.googleapis.com/auth/userinfo.profile",
+            ],
+            redirect_uri="postmessage",
+        )
 
         try:
 
-            idinfo = id_token.verify_oauth2_token(
-                token,
-                requests.Request(),
-                settings.GOOGLE_OAUTH_CLIENT_ID
-            )
+            flow.fetch_token(code=code)
 
-        except ValueError:
-            
-            return Response({"error": "Token inválido"}, status=400)
+        except Exception as e:
 
-        email = idinfo.get("email")
-        username = idinfo.get("name")
+            traceback.print_exc()
+
+            return Response({"error": str(e)}, status=400)
+
+        credentials = flow.credentials
+
+        idinfo = id_token.verify_oauth2_token(
+            credentials.id_token,
+            requests.Request(),
+            settings.GOOGLE_OAUTH_CLIENT_ID,
+        )
+
+        email = idinfo["email"]
+        username = idinfo.get("name", email.split("@")[0])
 
         user, _ = User.objects.get_or_create(
             email=email,
-            defaults={"username": username}
+            defaults={
+                "username": username,
+            },
         )
 
         refresh = RefreshToken.for_user(user)
@@ -237,8 +263,9 @@ class GoogleLogin(APIView):
             "user": {
                 "email": user.email,
                 "username": user.username,
-            }
+            },
         })
+    
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
@@ -301,11 +328,11 @@ class RequestPasswordReset(generics.GenericAPIView):
 
             if not settings.DEBUG:
 
-                reset_url = f"https://exponere.com.br/auth/reset/password/update/{token}/"
+                reset_url = f"https://app.exponere.com.br/recuperar-senha/{token}/resetar-senha"
 
             else:
 
-                reset_url = f"http://127.0.0.1:8000/api/v1/auth/reset/password/update/{token}/"
+                reset_url = f"http://localhost:3000/recuperar-senha/{token}/resetar-senha"
 
             send_password_reset_email_task(user, reset_url)
 

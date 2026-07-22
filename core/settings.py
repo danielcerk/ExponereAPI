@@ -192,6 +192,7 @@ if DEBUG:
     ]
 
     CORS_ALLOW_HEADERS = list(default_headers) + ['x-api-key']
+    CORS_ALLOW_CREDENTIALS = True
 
     CSRF_TRUSTED_ORIGINS =  [
 

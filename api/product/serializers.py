@@ -72,10 +72,17 @@ class ImageSerializer(serializers.ModelSerializer):
         image_file = validated_data.pop('image_upload', None)
 
         if image_file:
-
-            validated_data['image'] = upload_to_cloudinary_img(
-                image_file
-            )
+            print(">>> nome:", image_file.name)
+            print(">>> content_type:", image_file.content_type)
+            print(">>> tamanho:", image_file.size)
+            try:
+                validated_data['image'] = upload_to_cloudinary_img(
+                    image_file
+                )
+            except ValueError as e:
+                raise serializers.ValidationError({
+                    "image_upload": str(e)
+                })
 
         return validated_data
 
@@ -115,7 +122,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     images = ImageSerializer(
         many=True,
-        required=False
+        read_only=True
     )
 
     class Meta:
@@ -150,7 +157,7 @@ class ProductSerializer(serializers.ModelSerializer):
         stock_data = validated_data.pop('stocks', None)
         categories = validated_data.pop('category', [])
         subcategories = validated_data.pop('subcategory', [])
-        images_data = validated_data.pop('images', [])
+        # images_data = validated_data.pop('images', [])
 
         catalog = get_object_or_404(Catalog, user=request.user)
 
@@ -185,12 +192,12 @@ class ProductSerializer(serializers.ModelSerializer):
                     **movement_data
                 )
 
-        for image_data in images_data:
+        # for image_data in images_data:
 
-            Image.objects.create(
-                product=product,
-                **image_data
-            )
+        #     Image.objects.create(
+        #         product=product,
+        #         **image_data
+        #     )
 
         images_files = request.FILES.getlist('images')
 
@@ -212,7 +219,7 @@ class ProductSerializer(serializers.ModelSerializer):
         stock_data = validated_data.pop('stocks', None)
         categories = validated_data.pop('category', None)
         subcategories = validated_data.pop('subcategory', None)
-        images_data = validated_data.pop('images', None)
+        # images_data = validated_data.pop('images', None)
 
         for attr, value in validated_data.items():
 
@@ -259,7 +266,8 @@ class ProductSerializer(serializers.ModelSerializer):
                     **movement_data
                 )
 
-        keep_ids = request.data.get('keep_images', None)
+        # keep_ids = request.data.get('keep_images', None)
+        keep_ids = request.data.getlist('keep_images') if hasattr(request.data, 'getlist') else request.data.get('keep_images', [])
 
         if keep_ids is not None:
 
@@ -271,14 +279,14 @@ class ProductSerializer(serializers.ModelSerializer):
 
                 instance.images.all().delete()
 
-        if images_data:
+        # if images_data:
 
-            for image_data in images_data:
+        #     for image_data in images_data:
 
-                Image.objects.create(
-                    product=instance,
-                    **image_data
-                )
+        #         Image.objects.create(
+        #             product=instance,
+        #             **image_data
+        #         )
 
         images_files = request.FILES.getlist('images')
 

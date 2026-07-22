@@ -17,9 +17,9 @@ def create_profile_user(sender, instance, created, **kwargs):
             user=instance, address=address
         )
 
-        send_welcome_email_task.delay(
+        # send_welcome_email_task.delay(
 
-            instance.email, instance.username
+        #     instance.email, instance.username
 
-        )
+        # )
 		

@@ -12,7 +12,7 @@ ALLOWED_CONTENT_TYPES = {
 }
 
 
-ALLOWED_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif", "svg"}
+ALLOWED_IMAGE_EXTENSIONS = {"jpg", "jpeg", "jfif", "png", "webp", "gif", "svg"}
 ALLOWED_IMAGE_CONTENT_TYPES = {
     "image/jpeg",
     "image/png",

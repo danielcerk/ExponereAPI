@@ -207,6 +207,8 @@ class LogoutAPIView(
 
 class GoogleLogin(APIView):
 
+    permission_classes = [AllowAny]
+
     def post(self, request):
         code = request.data.get("code")
 

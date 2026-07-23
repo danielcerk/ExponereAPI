@@ -117,6 +117,8 @@ def get_route_chart_data(
     ga_data = {}
 
     for row in response.rows:
+
+
         raw_date = row.dimension_values[0].value
 
         formatted_date = f"{raw_date[6:8]}/{raw_date[4:6]}"

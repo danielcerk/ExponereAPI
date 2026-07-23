@@ -176,10 +176,6 @@ class Profile(models.Model):
     cpf_cnpj = models.CharField(
         verbose_name='CPF ou CNPJ',
         max_length=18,
-        validators=[
-            cpf_cnpj_validator,
-            validate_no_repeated_chars
-        ],
         unique=True,
         null=True,
         blank=True

@@ -109,7 +109,6 @@ class RegisterView(generics.CreateAPIView):
 
 class AccountViewSet(ModelViewSet):
 
-    parser_classes = (MultiPartParser, FormParser)
     serializer_class = AccountSerializer
     permission_classes = [IsOwner]
 
@@ -122,16 +121,20 @@ class AccountViewSet(ModelViewSet):
         user = request.user
 
         if request.method == 'GET':
+
             return Response(self.get_serializer(user).data)
 
         if request.method in ['PUT', 'PATCH']:
+
             serializer = self.get_serializer(
                 user,
                 data=request.data,
                 partial=(request.method == 'PATCH')
             )
+
             serializer.is_valid(raise_exception=True)
             serializer.save()
+
             return Response(serializer.data)
 
         if request.method == 'DELETE':

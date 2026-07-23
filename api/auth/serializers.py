@@ -183,18 +183,43 @@ class RegisterSerializer(serializers.ModelSerializer):
     
 class ProfileSerializer(serializers.ModelSerializer):
 
+    cpf_cnpj = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True
+    )
+
     address = AddressSerializer(required=False)
+
     class Meta:
         
         model = Profile
         fields = '__all__'
 
-        read_only_fields = [
+    def run_validation(self, data=serializers.empty):
 
-            'id', 'user', 'created_at',
-            'updated_at'
+        if self.parent and getattr(self.parent, "instance", None):
+            self.instance = self.parent.instance.profile
 
-        ]
+        return super().run_validation(data)
+
+    def validate_cpf_cnpj(self, value):
+
+        if not value:
+            return value
+
+        queryset = Profile.objects.filter(cpf_cnpj=value)
+
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+
+            raise serializers.ValidationError(
+                "Perfil com este CPF ou CNPJ já existe."
+            )
+
+        return value
 
     def update(self, instance, validated_data):
 
@@ -228,17 +253,26 @@ class ProfileSerializer(serializers.ModelSerializer):
     
 class AccountSerializer(serializers.ModelSerializer):
 
-    profile = ProfileSerializer()
+    profile = ProfileSerializer(required=False)
 
-    password = serializers.CharField(write_only=True, required=False)
+    password = serializers.CharField(
+        write_only=True,
+        required=False
+    )
 
     class Meta:
-        
         model = User
         fields = (
-            'id', 'username', 
-            'first_name', 'last_name', 'full_name',
-            'email','password', 'profile', 'role', 'catalog'
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'full_name',
+            'email',
+            'password',
+            'profile',
+            'role',
+            'catalog'
         )
 
         read_only_fields = (
@@ -258,6 +292,7 @@ class AccountSerializer(serializers.ModelSerializer):
 
         password = validated_data.pop("password", None)
         profile_data = validated_data.pop("profile", None)
+
 
         if password:
 

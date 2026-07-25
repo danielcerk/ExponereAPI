@@ -25,6 +25,8 @@ from api.stock.serializers import StockSerializer
 from api.cloudinary_utils import upload_to_cloudinary_img
 from api.stock.models import StockMovement, Stock
 
+from api.subscription.models import CheckoutSessionRecord
+
 class ProductLogisticInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -160,6 +162,25 @@ class ProductSerializer(serializers.ModelSerializer):
         # images_data = validated_data.pop('images', [])
 
         catalog = get_object_or_404(Catalog, user=request.user)
+
+        checkout = CheckoutSessionRecord.objects.filter(
+            user=request.user
+        ).select_related('plan').first()
+
+
+        if checkout and checkout.plan.name == "Grátis":
+
+            products_count = Product.objects.filter(
+                catalog=catalog
+            ).count()
+
+            if products_count >= 10:
+
+                raise serializers.ValidationError({
+
+                    "products": "O plano grátis permite cadastrar até 10 produtos."
+
+                })
 
         product = Product.objects.create(
             catalog=catalog,

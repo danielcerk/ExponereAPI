@@ -1,11 +1,18 @@
 from rest_framework import serializers
 
+from api.product.serializers import ProductSerializer
+
 from .models import Wishlist
 
 class WishlistSerializer(serializers.ModelSerializer):
 
     product_name = serializers.CharField(
         source="product.name",
+        read_only=True
+    )
+
+    product_data = ProductSerializer(
+        source="product",
         read_only=True
     )
 
@@ -16,6 +23,7 @@ class WishlistSerializer(serializers.ModelSerializer):
             "id",
             "product",
             "product_name",
+            "product_data",
             "quantity",
             "session_key",
             "is_active",

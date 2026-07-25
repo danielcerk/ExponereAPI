@@ -8,6 +8,7 @@ import re
 from api.customer.models import Customer
 from api.address.models import Address
 from api.address.serializers import AddressSerializer
+from api.catalog.models import Catalog
 
 class CustomerSerializer(serializers.ModelSerializer):
 
@@ -30,7 +31,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
             'session_key': {'required': False},
             "is_active": {'required': False},
-            "catalog": {'required': False},
+            'catalog': {'required': False},
             "cpf_cnpj": {"validators": []},
 
         }
@@ -94,40 +95,77 @@ class CustomerSerializer(serializers.ModelSerializer):
 
             session.save()
 
+
         address_data = validated_data.pop("address", None)
 
-        first_name = validated_data.get("first_name", "") or ""
-        last_name = validated_data.get("last_name", "") or ""
+        catalog = validated_data.pop("catalog", None)
+
+        if not catalog:
+
+            view = self.context.get("view")
+
+            if view:
+
+                catalog_id = view.kwargs.get("catalog_pk")
+
+                if catalog_id:
+                    catalog = get_object_or_404(
+                        Catalog,
+                        id=catalog_id
+                    )
+
+
+        if not catalog:
+            raise serializers.ValidationError(
+                {
+                    "catalog": "Catálogo é obrigatório."
+                }
+            )
+
+
+        first_name = validated_data.get("first_name", "")
+        last_name = validated_data.get("last_name", "")
 
         full_name = f"{first_name} {last_name}".strip()
+
 
         validated_data["full_name"] = full_name
         validated_data["slug"] = slugify(full_name)
         validated_data["session_key"] = session.session_key
+        validated_data["catalog"] = catalog
+
 
         cpf_cnpj = validated_data.get("cpf_cnpj")
+
 
         customer = None
 
         if cpf_cnpj:
 
-            customer = Customer.objects.filter(cpf_cnpj=cpf_cnpj).first()
+            customer = Customer.objects.filter(
+                cpf_cnpj=cpf_cnpj,
+                catalog=catalog
+            ).first()
+
 
         if address_data:
 
-            address = Address.objects.create(**address_data)
+            address = Address.objects.create(
+                **address_data
+            )
 
             validated_data["address"] = address
+
 
         if customer:
 
             for attr, value in validated_data.items():
-
                 setattr(customer, attr, value)
 
             customer.save()
 
             return customer
+
 
         return Customer.objects.create(**validated_data)
 

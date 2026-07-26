@@ -117,23 +117,44 @@ class Order(models.Model):
 
     def calculate_totals(self):
 
-        subtotal = sum(
-            [(item.wishlist_product.product.price * item.wishlist_product.quantity) for item in self.items.all()]
-        )
+        subtotal = Decimal("0.00")
+
+        for item in self.items.all():
+
+            product = item.wishlist_product.product
+
+            if (
+                product.promotion_is_active
+                and product.promotional_price is not None
+            ):
+                price = product.promotional_price
+            else:
+                price = product.price
+
+            subtotal += price * item.wishlist_product.quantity
 
         self.apply_first_buy_coupon()
 
         discount = Decimal("0.00")
 
         if self.coupon and self.coupon.is_valid():
-
             discount = self.coupon.calculate_discount(subtotal)
 
         total = subtotal - discount
 
         self.subtotal = subtotal
         self.discount = discount
-        self.total = total if total > 0 else Decimal("0.00")
+        self.total = max(total, Decimal("0.00"))
+
+        self.save(
+            update_fields=[
+                "subtotal",
+                "discount",
+                "total",
+                "coupon",
+                "updated_at"
+            ]
+        )
 
 
 class ProductOrder(models.Model):

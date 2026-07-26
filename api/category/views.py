@@ -5,6 +5,7 @@ from rest_framework.permissions import (
     SAFE_METHODS,
 
 )
+from rest_framework.filters import OrderingFilter
 
 from .models import Category, BusinessCategory, SubCategory
 from .serializers import CategorySerializer, BusinessCategorySerializer, SubCategorySerializer
@@ -62,12 +63,24 @@ class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
+    filter_backends = [
+        OrderingFilter,
+    ]
+
+    ordering_fields = [
+        "name",
+        "is_active",
+        "created_at",
+    ]
+
+    ordering = [
+        "name"
+    ]
+
     def get_queryset(self):
 
         return Category.objects.filter(
-
             catalog__id=self.kwargs["catalog_pk"]
-
         )
     
 class SubCategoryViewSet(ModelViewSet):

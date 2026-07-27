@@ -69,10 +69,25 @@ class Coupon(models.Model):
 
         return None
 
-    @property
-    def discount_value(self):
+    def get_real_instance(self):
 
-        return None
+        if hasattr(self, "couponprogressive"):
+
+            return self.couponprogressive
+
+        if hasattr(self, "couponfixedvalue"):
+
+            return self.couponfixedvalue
+
+        if hasattr(self, "couponpercentvalue"):
+
+            return self.couponpercentvalue
+
+        if hasattr(self, "couponfirstbuy"):
+
+            return self.couponfirstbuy
+
+        return self
 
     def is_valid(self):
 

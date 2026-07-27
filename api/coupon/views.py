@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 
 from rest_framework.views import APIView
-
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import (
 
@@ -41,16 +41,28 @@ class BaseCouponViewSet(ModelViewSet):
 
     permission_classes = [IsOwnerOrReadOnly]
 
+    filter_backends = [OrderingFilter]
+
+    ordering_fields = [
+        "name",
+        "code",
+        "usage_count",
+        "usage_limit",
+        "start_date",
+        "end_date",
+        "created_at",
+        "updated_at",
+    ]
+
+    ordering = ["-updated_at"]
+
     def get_catalog(self):
 
         queryset = Catalog.objects.filter(
-
             pk=self.kwargs["catalog_pk"]
-
         )
 
         if self.request.method not in SAFE_METHODS:
-            
             queryset = queryset.filter(user=self.request.user)
 
         return get_object_or_404(queryset)
@@ -58,17 +70,13 @@ class BaseCouponViewSet(ModelViewSet):
     def get_queryset(self):
 
         return self.queryset.filter(
-
             catalog=self.get_catalog()
-
         )
 
     def perform_create(self, serializer):
 
         serializer.save(
-
             catalog=self.get_catalog()
-
         )
 
 
@@ -168,3 +176,65 @@ class CouponIsValidView(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+class CouponViewSet(ModelViewSet):
+
+    permission_classes = [IsOwnerOrReadOnly]
+
+    serializer_class = CouponDynamicSerializer
+
+    filter_backends = [
+        SearchFilter,
+        OrderingFilter,
+    ]
+
+    search_fields = [
+        "name",
+        "code",
+    ]
+
+    ordering_fields = [
+        "name",
+        "code",
+        "usage_count",
+        "usage_limit",
+        "start_date",
+        "end_date",
+        "created_at",
+        "updated_at",
+    ]
+
+    ordering = ["-updated_at"]
+
+    def get_catalog(self):
+
+        queryset = Catalog.objects.filter(
+            pk=self.kwargs["catalog_pk"]
+        )
+
+        if self.request.method not in SAFE_METHODS:
+            queryset = queryset.filter(user=self.request.user)
+
+        return get_object_or_404(queryset)
+
+    def get_queryset(self):
+
+        queryset = Coupon.objects.filter(
+            catalog=self.get_catalog()
+        )
+
+        coupon_type = self.request.query_params.get("type")
+
+        if coupon_type == "progressive":
+            queryset = queryset.filter(couponprogressive__isnull=False)
+
+        elif coupon_type == "fixed":
+            queryset = queryset.filter(couponfixedvalue__isnull=False)
+
+        elif coupon_type == "percentage":
+            queryset = queryset.filter(couponpercentvalue__isnull=False)
+
+        elif coupon_type == "first_buy":
+            queryset = queryset.filter(couponfirstbuy__isnull=False)
+
+        return queryset

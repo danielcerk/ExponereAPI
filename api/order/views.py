@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import BasePermission
+from rest_framework.filters import OrderingFilter
 
 from .models import Order
 from .serializers import OrderSerializer
@@ -31,6 +32,16 @@ class OrderViewSet(ModelViewSet):
 
     permission_classes = [IsOrderOwner]
     serializer_class = OrderSerializer
+    filter_backends = [OrderingFilter]
+
+    ordering_fields = [
+        "id",
+        "customer__full_name",
+        "total",
+        "created_at",
+    ]
+
+    ordering = ["-created_at"]
 
     def get_queryset(self):
 

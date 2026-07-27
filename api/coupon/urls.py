@@ -5,11 +5,13 @@ from .views import *
 
 router = DefaultRouter()
 
-router.register(r'coupon-progressive', CouponProgressiveViewSet, basename='coupon-progressive')
-router.register(r'coupon-fixed', CouponFixedValueViewSet, basename='coupon-fixed')
-router.register(r'coupon-percent', CouponPercentValueViewSet, basename='coupon-percent')
-router.register(r'coupon-first-buy', CouponFirstBuyViewSet, basename='coupon-first-buy')
-router.register(r'coupon-usage', CouponUsageViewSet, basename='coupon-usage')
+#router.register(r'coupon-progressive', CouponProgressiveViewSet, basename='coupon-progressive')
+#router.register(r'coupon-fixed', CouponFixedValueViewSet, basename='coupon-fixed')
+#router.register(r'coupon-percent', CouponPercentValueViewSet, basename='coupon-percent')
+#router.register(r'coupon-first-buy', CouponFirstBuyViewSet, basename='coupon-first-buy')
+#router.register(r'coupon-usage', CouponUsageViewSet, basename='coupon-usage')
+
+router.register(r"coupons", CouponViewSet, basename="coupons")
 
 urlpatterns = [
 

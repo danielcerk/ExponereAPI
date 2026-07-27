@@ -5,7 +5,8 @@ from .models import (
     CouponFixedValue,
     CouponPercentValue,
     CouponFirstBuy,
-    CouponUsage
+    CouponUsage,
+    Coupon
 )
 
 class BaseCouponSerializer(serializers.ModelSerializer):
@@ -137,24 +138,64 @@ class CouponUsageSerializer(serializers.ModelSerializer):
 
         read_only_fields = ("coupon", "customer", "order", "created_at", "updated_at")
 
-class CouponDynamicSerializer(serializers.Serializer):
+class CouponDynamicSerializer(serializers.ModelSerializer):
+
+    discount_type = serializers.SerializerMethodField()
+    discount_value = serializers.SerializerMethodField()
+    is_valid_coupon = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Coupon
+        fields = [
+            "id",
+            "name",
+            "code",
+            "is_active",
+            "usage_limit",
+            "usage_count",
+            "start_date",
+            "end_date",
+            "created_at",
+            "updated_at",
+            "discount_type",
+            "discount_value",
+            "is_valid_coupon",
+        ]
+
+    def get_discount_type(self, obj):
+
+        coupon = obj.get_real_instance()
+
+        return coupon.discount_type
+
+    def get_discount_value(self, obj):
+
+        if hasattr(obj, "couponprogressive"):
+            return obj.couponprogressive.percent_discount
+
+        if hasattr(obj, "couponfixedvalue"):
+            return obj.couponfixedvalue.discount_value
+
+        if hasattr(obj, "couponpercentvalue"):
+            return obj.couponpercentvalue.percent_discount
+
+        if hasattr(obj, "couponfirstbuy"):
+            return obj.couponfirstbuy.percent_discount
+
+        return None
+
+    def get_is_valid_coupon(self, obj):
+
+        return obj.is_valid()
 
     def to_representation(self, instance):
 
-        if hasattr(instance, "couponprogressive"):
+        coupon = instance.get_real_instance()
 
-            return CouponProgressiveSerializer(instance.couponprogressive).data
+        data = super().to_representation(coupon)
 
-        if hasattr(instance, "couponfixedvalue"):
+        data["discount_type"] = coupon.discount_type
+        data["discount_value"] = self.get_discount_value(coupon)
+        data["is_valid_coupon"] = coupon.is_valid()
 
-            return CouponFixedValueSerializer(instance.couponfixedvalue).data
-
-        if hasattr(instance, "couponpercentvalue"):
-
-            return CouponPercentValueSerializer(instance.couponpercentvalue).data
-
-        if hasattr(instance, "couponfirstbuy"):
-            
-            return CouponFirstBuySerializer(instance.couponfirstbuy).data
-
-        return None
+        return data

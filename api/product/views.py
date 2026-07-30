@@ -54,17 +54,21 @@ class ProductViewSet(ModelViewSet):
     serializer_class = ProductSerializer
 
     def get_queryset(self):
-        
+
         product_id = self.kwargs.get("pk")
         catalog_id = self.kwargs.get("catalog_pk")
 
         if not catalog_id:
             return Product.objects.none()
 
-        queryset = Product.objects.filter(catalog_id=catalog_id)
+        queryset = Product.objects.filter(
+            catalog_id=catalog_id
+        )
 
         if self.request.user.is_authenticated:
-            queryset = queryset.filter(catalog__user=self.request.user)
+            queryset = queryset.filter(
+                catalog__user=self.request.user
+            )
 
         if product_id:
             queryset = queryset.filter(pk=product_id)
@@ -72,17 +76,44 @@ class ProductViewSet(ModelViewSet):
         search = self.request.query_params.get("search")
         category = self.request.query_params.get("category")
         subcategory = self.request.query_params.get("subcategory")
+        ordering = self.request.query_params.get("ordering")
 
         if search:
-            queryset = queryset.filter(title__icontains=search)
+            queryset = queryset.filter(
+                title__icontains=search
+            )
 
         if category:
-            queryset = queryset.filter(category__id=category)
+            queryset = queryset.filter(
+                category__id=category
+            )
 
         if subcategory:
-            queryset = queryset.filter(subcategory__id=subcategory)
+            queryset = queryset.filter(
+                subcategory__id=subcategory
+            )
 
         queryset = queryset.distinct()
+
+        allowed_ordering = {
+            "title",
+            "-title",
+            "price",
+            "-price",
+            "promotion_is_active",
+            "-promotion_is_active",
+            "is_active",
+            "-is_active",
+            "created_at",
+            "-created_at",
+            "updated_at",
+            "-updated_at",
+            "stocks__quantity",
+            "-stocks__quantity",
+        }
+
+        if ordering in allowed_ordering:
+            queryset = queryset.order_by(ordering)
 
         return queryset
     

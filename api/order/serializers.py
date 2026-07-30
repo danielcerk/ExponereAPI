@@ -19,7 +19,7 @@ class ProductOrderSerializer(serializers.ModelSerializer):
 
     wishlist_product = WishlistSerializer(read_only=True)
     wishlist_product_id = serializers.PrimaryKeyRelatedField(
-        queryset=ProductOrder._meta.get_field('wishlist_product').related_model.objects.all(),
+        queryset=Wishlist.objects.all(),
         source='wishlist_product',
         write_only=True
     )
@@ -251,13 +251,15 @@ class OrderSerializer(serializers.ModelSerializer):
 
             customer = instance.customer
 
-            if customer:
+            serializer = CustomerSerializer(
+                customer,
+                data=customer_data,
+                partial=True,
+                context=self.context,
+            )
 
-                for attr, value in customer_data.items():
-
-                    setattr(customer, attr, value)
-
-                customer.save()
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
 
         instance.calculate_totals()
         instance.save()

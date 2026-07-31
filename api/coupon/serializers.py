@@ -1,144 +1,38 @@
 from rest_framework import serializers
 
-from .models import (
-    CouponProgressive,
-    CouponFixedValue,
-    CouponPercentValue,
-    CouponFirstBuy,
-    CouponUsage,
-    Coupon
-)
+from .models import *
 
-class BaseCouponSerializer(serializers.ModelSerializer):
-
-    is_valid_coupon = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        fields = [
-            "id",
-            "name",
-            "code",
-            "is_active",
-            "usage_limit",
-            "usage_count",
-            "start_date",
-            "end_date",
-            "created_at",
-            "updated_at",
-            "is_valid_coupon",
-            "min_purchase_value"
-        ]
-        read_only_fields = (
-            "id",
-            "catalog",
-            "usage_count", 
-            "created_at", 
-            "updated_at"
-        )
-
-        extra_kwargs = {
-
-            "is_active": {"required": False},
-            "is_valid_coupon": {"required": False}
-
-        }
-
-    def get_is_valid_coupon(self, obj):
-
-        return obj.is_valid()
-
-    def validate(self, data):
-
-        start_date = data.get("start_date")
-        end_date = data.get("end_date")
-
-        if start_date and end_date and start_date > end_date:
-            
-            raise serializers.ValidationError(
-                "A data de início não pode ser maior que a data de expiração."
-            )
-
-        return data
-
-class CouponProgressiveSerializer(BaseCouponSerializer):
-
-    class Meta(BaseCouponSerializer.Meta):
-
-        model = CouponProgressive
-        fields = BaseCouponSerializer.Meta.fields + [
-            "min_purchase_value",
-            "max_purchase_value",
-            "percent_discount",
-        ]
-
-    def validate(self, data):
-        
-        data = super().validate(data)
-
-        min_val = data.get("min_purchase_value")
-        max_val = data.get("max_purchase_value")
-
-        if min_val and max_val and min_val > max_val:
-            raise serializers.ValidationError(
-                "O valor mínimo não pode ser maior que o valor máximo."
-            )
-
-        return data
-
-class CouponFixedValueSerializer(BaseCouponSerializer):
-
-    class Meta(BaseCouponSerializer.Meta):
-
-        model = CouponFixedValue
-        fields = BaseCouponSerializer.Meta.fields + [
-            "discount_value",
-            "min_purchase_value",
-        ]
-
-class CouponPercentValueSerializer(BaseCouponSerializer):
-
-    class Meta(BaseCouponSerializer.Meta):
-        model = CouponPercentValue
-        fields = BaseCouponSerializer.Meta.fields + [
-            "percent_discount",
-            "min_purchase_value",
-            "max_discount_value",
-        ]
-
-    def validate(self, data):
-
-        data = super().validate(data)
-
-        percent = data.get("percent_discount")
-
-        if percent and percent > 100:
-
-            raise serializers.ValidationError(
-                "O percentual não pode ser maior que 100%."
-            )
-
-        return data
-
-class CouponFirstBuySerializer(BaseCouponSerializer):
-
-    class Meta(BaseCouponSerializer.Meta):
-
-        model = CouponFirstBuy
-        fields = BaseCouponSerializer.Meta.fields + [
-            "percent_discount",
-            "min_purchase_value",
-        ]
-
-class CouponUsageSerializer(serializers.ModelSerializer):
-
-    class Meta:
-
-        model = CouponUsage
-        fields = '__all__'
-
-        read_only_fields = ("coupon", "customer", "order", "created_at", "updated_at")
+from django.db import transaction
 
 class CouponDynamicSerializer(serializers.ModelSerializer):
+
+    min_purchase_value = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        allow_null=True,
+    )
+
+    percent_discount = serializers.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        required=False,
+        allow_null=True,
+    )
+
+    max_purchase_value = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        allow_null=True,
+    )
+
+    max_discount_value = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        allow_null=True,
+    )
 
     discount_type = serializers.SerializerMethodField()
     discount_value = serializers.SerializerMethodField()
@@ -160,6 +54,10 @@ class CouponDynamicSerializer(serializers.ModelSerializer):
             "discount_type",
             "discount_value",
             "is_valid_coupon",
+            "min_purchase_value",
+            "percent_discount",
+            "max_purchase_value",
+            "max_discount_value",
         ]
 
     def get_discount_type(self, obj):
@@ -192,10 +90,148 @@ class CouponDynamicSerializer(serializers.ModelSerializer):
 
         coupon = instance.get_real_instance()
 
-        data = super().to_representation(coupon)
+        data = {
+            "id": coupon.id,
+            "name": coupon.name,
+            "code": coupon.code,
+            "is_active": coupon.is_active,
+            "usage_limit": coupon.usage_limit,
+            "usage_count": coupon.usage_count,
+            "start_date": coupon.start_date,
+            "end_date": coupon.end_date,
+            "created_at": coupon.created_at,
+            "updated_at": coupon.updated_at,
+            "discount_type": coupon.discount_type,
+            "is_valid_coupon": coupon.is_valid(),
 
-        data["discount_type"] = coupon.discount_type
-        data["discount_value"] = self.get_discount_value(coupon)
-        data["is_valid_coupon"] = coupon.is_valid()
+            "discount_value": None,
+            "percent_discount": None,
+            "min_purchase_value": None,
+            "max_purchase_value": None,
+            "max_discount_value": None,
+        }
+
+        if isinstance(coupon, CouponFixedValue):
+            data["discount_value"] = coupon.discount_value
+            data["min_purchase_value"] = coupon.min_purchase_value
+
+        elif isinstance(coupon, CouponPercentValue):
+            data["percent_discount"] = coupon.percent_discount
+            data["min_purchase_value"] = coupon.min_purchase_value
+            data["max_discount_value"] = coupon.max_discount_value
+
+        elif isinstance(coupon, CouponProgressive):
+            data["percent_discount"] = coupon.percent_discount
+            data["min_purchase_value"] = coupon.min_purchase_value
+            data["max_purchase_value"] = coupon.max_purchase_value
+
+        elif isinstance(coupon, CouponFirstBuy):
+            data["percent_discount"] = coupon.percent_discount
+            data["min_purchase_value"] = coupon.min_purchase_value
 
         return data
+
+    def change_coupon_type(
+        self,
+        coupon,
+        discount_type,
+        data,
+    ):
+
+        parent = Coupon.objects.get(pk=coupon.pk)
+
+        if hasattr(parent, "couponprogressive"):
+            parent.couponprogressive.delete()
+
+        if hasattr(parent, "couponfixedvalue"):
+            parent.couponfixedvalue.delete()
+
+        if hasattr(parent, "couponpercentvalue"):
+            parent.couponpercentvalue.delete()
+
+        if hasattr(parent, "couponfirstbuy"):
+            parent.couponfirstbuy.delete()
+
+        mapping = {
+            "fixed": CouponFixedValue,
+            "percentage": CouponPercentValue,
+            "progressive": CouponProgressive,
+            "first_buy": CouponFirstBuy,
+        }
+
+        model = mapping[discount_type]
+
+        fields = {}
+
+        if discount_type == "fixed":
+            fields["discount_value"] = data.get("discount_value")
+            fields["min_purchase_value"] = data.get("min_purchase_value")
+
+        elif discount_type == "percentage":
+            fields["percent_discount"] = data.get("percent_discount")
+            fields["min_purchase_value"] = data.get("min_purchase_value")
+            fields["max_discount_value"] = data.get("max_discount_value")
+
+        elif discount_type == "progressive":
+            fields["percent_discount"] = data.get("percent_discount")
+            fields["min_purchase_value"] = data.get("min_purchase_value")
+            fields["max_purchase_value"] = data.get("max_purchase_value")
+
+        elif discount_type == "first_buy":
+            fields["percent_discount"] = data.get("percent_discount")
+            fields["min_purchase_value"] = data.get("min_purchase_value")
+
+        new_coupon = model.objects.create(
+            coupon_ptr=parent,
+            **fields,
+        )
+
+        return new_coupon
+
+    def update(self, instance, validated_data):
+
+        with transaction.atomic():
+
+            coupon = instance.get_real_instance()
+
+            new_type = validated_data.pop(
+                "discount_type",
+                coupon.discount_type,
+            )
+
+            common_fields = [
+                "name",
+                "code",
+                "is_active",
+                "usage_limit",
+                "start_date",
+                "end_date",
+            ]
+
+            common_data = {}
+
+            for field in common_fields:
+
+                if field in validated_data:
+                    value = validated_data.pop(field)
+                    setattr(coupon, field, value)
+                    common_data[field] = value
+
+            coupon.save()
+
+            if new_type != coupon.discount_type:
+
+                return self.change_coupon_type(
+                    coupon,
+                    new_type,
+                    validated_data,
+                )
+
+            for field, value in validated_data.items():
+
+                if hasattr(coupon, field):
+                    setattr(coupon, field, value)
+
+            coupon.save()
+
+            return coupon

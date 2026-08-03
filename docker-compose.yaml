@@ -1,5 +1,4 @@
 services:
-
   backend:
     build: .
     container_name: exponere_backend
@@ -21,7 +20,6 @@ services:
   celery:
     build: .
     container_name: exponere_celery
-
     command: celery -A core worker -l info
 
     env_file:
@@ -35,7 +33,6 @@ services:
   celery_beat:
     build: .
     container_name: exponere_celery_beat
-
     command: celery -A core beat -l info
 
     env_file:
@@ -52,24 +49,46 @@ services:
 
     restart: unless-stopped
 
+    depends_on:
+      - backend
+
     ports:
       - "80:80"
       - "443:443"
 
-    depends_on:
-      - backend
-
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
       - static_volume:/app/staticfiles
       - media_volume:/app/media
+
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
 
     networks:
       - exponere
 
-volumes:
-  static_volume:
-  media_volume:
+  certbot:
+    image: certbot/certbot
+    container_name: exponere_certbot
+
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+
+    entrypoint: >
+      sh -c "trap exit TERM;
+      while :;
+      do
+        certbot renew;
+        sleep 12h;
+      done"
 
 networks:
   exponere:
+
+volumes:
+  static_volume:
+  media_volume:
+  certbot_conf:
+  certbot_www:

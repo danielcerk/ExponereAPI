@@ -3,30 +3,17 @@ services:
   backend:
     build: .
     container_name: exponere_backend
+    restart: unless-stopped
 
     env_file:
       - .env
 
-    restart: unless-stopped
-
     expose:
       - "8000"
-
-    depends_on:
-      - redis
 
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-
-    networks:
-      - exponere
-
-  redis:
-    image: redis:7-alpine
-    container_name: exponere_redis
-
-    restart: unless-stopped
 
     networks:
       - exponere
@@ -39,9 +26,6 @@ services:
 
     env_file:
       - .env
-
-    depends_on:
-      - redis
 
     restart: unless-stopped
 
@@ -56,9 +40,6 @@ services:
 
     env_file:
       - .env
-
-    depends_on:
-      - redis
 
     restart: unless-stopped
 

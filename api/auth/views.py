@@ -42,7 +42,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 
 from .models import PasswordReset 
-from .utils import get_client_ip, get_user_agent
+from .utils import get_client_ip, get_user_agent, generate_unique_username
 from .serializers import (
     MyTokenObtainPairSerializer,
     RegisterSerializer,
@@ -251,12 +251,16 @@ class GoogleLogin(APIView):
         )
 
         email = idinfo["email"]
-        username = idinfo.get("name", email.split("@")[0])
+        name = idinfo.get("name") or email.split("@")[0]
 
-        user, _ = User.objects.get_or_create(
+        username = User.generate_unique_username(name)
+
+        user, created = User.objects.get_or_create(
             email=email,
             defaults={
                 "username": username,
+                "first_name": idinfo.get("given_name", ""),
+                "last_name": idinfo.get("family_name", ""),
             },
         )
 

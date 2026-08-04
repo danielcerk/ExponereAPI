@@ -145,6 +145,22 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
+    @classmethod
+    def generate_unique_username(cls, value):
+        username = slugify(value)
+
+        if not username:
+            username = "user"
+
+        original = username
+        counter = 1
+
+        while cls.objects.filter(username=username).exists():
+            username = f"{original}{counter}"
+            counter += 1
+
+        return username
+
     def save(self, *args, **kwargs):
 
         self.full_name = f"{self.first_name or ''} {self.last_name or ''}".strip()

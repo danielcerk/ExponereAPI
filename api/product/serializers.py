@@ -27,6 +27,8 @@ from api.stock.models import StockMovement, Stock
 
 from api.subscription.models import CheckoutSessionRecord
 
+import json
+
 class ProductLogisticInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -74,16 +76,21 @@ class ImageSerializer(serializers.ModelSerializer):
         image_file = validated_data.pop('image_upload', None)
 
         if image_file:
-            print(">>> nome:", image_file.name)
-            print(">>> content_type:", image_file.content_type)
-            print(">>> tamanho:", image_file.size)
+
             try:
+
                 validated_data['image'] = upload_to_cloudinary_img(
+
                     image_file
+
                 )
+
             except ValueError as e:
+
                 raise serializers.ValidationError({
+
                     "image_upload": str(e)
+                    
                 })
 
         return validated_data
@@ -135,6 +142,18 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'slug', 'catalog', 'created_at', 'updated_at'
         )
 
+    def to_internal_value(self, data):
+        if hasattr(data, "dict"):
+            data = data.dict()
+
+        if isinstance(data.get("stocks"), str):
+            data["stocks"] = json.loads(data["stocks"])
+
+        if isinstance(data.get("logistic_info"), str):
+            data["logistic_info"] = json.loads(data["logistic_info"])
+
+        return super().to_internal_value(data)
+
     def validate(self, data):
 
         request = self.context.get('request')
@@ -153,6 +172,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+
         request = self.context.get('request')
 
         logistic_data = validated_data.pop('logistic_info', None)
@@ -160,6 +180,9 @@ class ProductSerializer(serializers.ModelSerializer):
         categories = validated_data.pop('category', [])
         subcategories = validated_data.pop('subcategory', [])
         # images_data = validated_data.pop('images', [])
+
+        print(request.data)
+        print(validated_data)
 
         catalog = get_object_or_404(Catalog, user=request.user)
 

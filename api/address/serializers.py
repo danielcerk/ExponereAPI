@@ -10,6 +10,7 @@ class AddressSerializer(serializers.ModelSerializer):
             "id": {"required": False},
             "street": {"required": False},
             "neighborhood": {"required": False},
+            "number": {"required": False},
             "city": {"required": False},
             "state": {"required": False},
             "cep": {"required": False},

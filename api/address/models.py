@@ -14,6 +14,13 @@ from .utils import (
 
 class Address(models.Model):
 
+    number = models.PositiveBigIntegerField(
+
+        null=True, blank=True,
+        verbose_name='Número',
+
+    )
+
     street = models.CharField(
         null=True, blank=True,
         verbose_name='Rua',

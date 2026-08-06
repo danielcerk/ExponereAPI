@@ -13,6 +13,8 @@ from api.cloudinary_utils import (
     upload_to_cloudinary_img, 
     delete_from_cloudinary_img
 )
+
+from api.address.serializers import AddressSerializer
 class LinkSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -83,8 +85,8 @@ class CatalogSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    owner_address = serializers.CharField(
-        source='user.profile.address',
+    owner_address = AddressSerializer(
+        source="user.profile.address",
         read_only=True
     )
 

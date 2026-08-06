@@ -6,7 +6,7 @@ from .models import Address
 class AddressModelAdmin(admin.ModelAdmin):
 
     list_display = [
-        'street', 'neighborhood', 'cep', 'city',
+        'number','street', 'neighborhood', 'cep', 'city',
         'state', 'full_address'
     ]
 

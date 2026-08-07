@@ -1,6 +1,5 @@
-from django.shortcuts import render
-
 from .serializers import ArticleBySlugSerializer, ArticlesSerializer
+from .models import Post
 
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -8,26 +7,30 @@ from rest_framework.views import APIView
 
 
 class ArticlesView(APIView):
-    
+
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
 
-        sort = request.query_params.get("sort")
+        posts = Post.objects.filter(
+            is_published=True
+        )
+
         page = request.query_params.get("page", 1)
 
         serializer = ArticlesSerializer(
-            instance={},
-            context={
-
-                "sort": sort,
-                "page": int(page)
-
-            }
-
+            posts,
+            many=True
         )
 
-        return Response(serializer.data)
+        return Response({
+            "articles": serializer.data,
+            "pagination": {
+                "page": int(page),
+                "count": posts.count()
+            }
+        })
+
 
 class ArticleView(APIView):
 
@@ -37,11 +40,21 @@ class ArticleView(APIView):
 
         slug = self.kwargs.get("post_slug")
 
-        serializer = ArticleBySlugSerializer(
-            instance={},
-            context={"slug": slug}
+        post = Post.objects.filter(
+            slug=slug,
+            is_published=True
+        ).first()
 
-        )
+        if not post:
+            return Response(
+                {
+                    "error": "Post não encontrado."
+                },
+                status=404
+            )
 
-        return Response(serializer.data)
+        serializer = ArticleBySlugSerializer(post)
 
+        return Response({
+            "article": serializer.data
+        })

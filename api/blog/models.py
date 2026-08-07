@@ -41,7 +41,7 @@ class Post(models.Model):
         verbose_name="Autor",
         max_length=150,
         blank=True,
-        default="Produtos Nordeste",
+        default="Exponere",
     )
 
     is_published = models.BooleanField(

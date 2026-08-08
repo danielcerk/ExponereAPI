@@ -7,12 +7,14 @@ from .views import (
     UpgradeDowngradeSessionAPIView,
     StripeWebhookAPIView,
     PlanModelViewSet,
+    MySubscriptionAPIView
 )
 
 router = DefaultRouter()
 router.register(r'plans', PlanModelViewSet, basename='plan')
 
 urlpatterns = [
+    path('my-subscription/', MySubscriptionAPIView.as_view(), name='my-subscription'),
     path('create-checkout/', CreateCheckoutSessionAPIView.as_view(), name='create-checkout'),
     path('upgrade-downgrade/', UpgradeDowngradeSessionAPIView.as_view(), name='upgrade-downgrade'),
     path('success/', SuccessAPIView.as_view(), name='success'),

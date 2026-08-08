@@ -188,6 +188,7 @@ if DEBUG:
         'http://127.0.0.1:3000',
 
         'https://4026-170-0-137-155.ngrok-free.app',
+        'https://87b2-170-0-137-216.ngrok-free.app'
 
     ]
 
@@ -200,6 +201,7 @@ if DEBUG:
         'http://127.0.0.1:3000',
 
         'https://4026-170-0-137-155.ngrok-free.app',
+        'https://87b2-170-0-137-216.ngrok-free.app'
 
     ]
 
@@ -491,3 +493,6 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(hour=21, minute=59),
     }
 }
+
+FACEBOOK_APP_ID = os.getenv('FACEBOOK_APP_ID')
+FACEBOOK_APP_SECRET = os.getenv('FACEBOOK_APP_SECRET')

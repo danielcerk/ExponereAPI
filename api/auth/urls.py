@@ -8,6 +8,7 @@ from .views import (
     LogoutAPIView,
     AccountViewSet,
     GoogleLogin,
+    FacebookLogin,
     setup_2fa,
     confirm_2fa,
     ResetPassword,
@@ -25,6 +26,7 @@ urlpatterns = [
     path('', include(router.urls)),
 
     path("google/login/", GoogleLogin.as_view()),
+    path("facebook/login/", FacebookLogin.as_view()),
 
     path('logout/', LogoutAPIView.as_view(), name ='logout'),
 

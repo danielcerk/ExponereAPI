@@ -35,11 +35,8 @@ from google.auth.transport import requests
 from dj_rest_auth.registration.views import SocialLoginView
 
 import traceback
-import requests
+import requests as http_requests
 import os
-
-from google.oauth2 import id_token
-from google.auth.transport import requests
 
 from .models import PasswordReset 
 from .utils import get_client_ip, get_user_agent, generate_unique_username
@@ -274,7 +271,157 @@ class GoogleLogin(APIView):
                 "username": user.username,
             },
         })
-    
+
+class FacebookLogin(APIView):
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+
+        access_token = request.data.get("access_token")
+
+        if not access_token:
+            return Response(
+                {"error": "Token não enviado"},
+                status=400,
+            )
+
+        try:
+
+            app_access_token = (
+                f"{settings.FACEBOOK_APP_ID}|"
+                f"{settings.FACEBOOK_APP_SECRET}"
+            )
+
+            debug_response = http_requests.get(
+                "https://graph.facebook.com/debug_token",
+                params={
+                    "input_token": access_token,
+                    "access_token": app_access_token,
+                },
+                timeout=10,
+            )
+
+            if debug_response.status_code != 200:
+                return Response(
+                    {"error": "Não foi possível validar o token do Facebook"},
+                    status=400,
+                )
+
+            debug_data = debug_response.json()
+
+            if "data" not in debug_data:
+                return Response(
+                    {"error": "Resposta inválida do Facebook"},
+                    status=400,
+                )
+
+            token_data = debug_data["data"]
+
+            if not token_data.get("is_valid"):
+                return Response(
+                    {"error": "Token do Facebook inválido"},
+                    status=400,
+                )
+
+            if str(token_data.get("app_id")) != str(
+                settings.FACEBOOK_APP_ID
+            ):
+                return Response(
+                    {"error": "Token não pertence a esta aplicação"},
+                    status=400,
+                )
+
+            facebook_id = token_data.get("user_id")
+
+            if not facebook_id:
+                return Response(
+                    {"error": "ID do usuário não encontrado"},
+                    status=400,
+                )
+
+            user_response = http_requests.get(
+                "https://graph.facebook.com/me",
+                params={
+                    "fields": "id,email,name,first_name,last_name",
+                    "access_token": access_token,
+                },
+                timeout=10,
+            )
+
+            if user_response.status_code != 200:
+                return Response(
+                    {"error": "Não foi possível obter os dados do Facebook"},
+                    status=400,
+                )
+
+            facebook_data = user_response.json()
+
+            if str(facebook_data.get("id")) != str(facebook_id):
+                return Response(
+                    {"error": "Usuário do token não corresponde ao usuário retornado"},
+                    status=400,
+                )
+
+            email = facebook_data.get("email")
+
+            if not email:
+                return Response(
+                    {
+                        "error": (
+                            "O Facebook não forneceu um endereço de e-mail. "
+                            "Verifique se a permissão de e-mail foi concedida."
+                        )
+                    },
+                    status=400,
+                )
+
+            name = facebook_data.get("name") or email.split("@")[0]
+
+            first_name = facebook_data.get("first_name", "")
+            last_name = facebook_data.get("last_name", "")
+
+            username = User.generate_unique_username(name)
+
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={
+                    "username": username,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                },
+            )
+
+            refresh = RefreshToken.for_user(user)
+
+            return Response({
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+                "user": {
+                    "email": user.email,
+                    "username": user.username,
+                },
+            })
+
+        except requests.RequestException as e:
+
+            return Response(
+                {
+                    "error": "Erro ao comunicar com o Facebook",
+                    "detail": str(e),
+                },
+                status=400,
+            )
+
+        except Exception as e:
+
+            return Response(
+                {
+                    "error": "Erro ao autenticar com o Facebook",
+                    "detail": str(e),
+                },
+                status=400,
+            )
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])

@@ -23,6 +23,7 @@ from .models import CheckoutSessionRecord, Plan
 from .serializers import ( 
     CheckoutSessionResponseSerializer, 
     CheckoutSessionSerializer,
+    UserSubscriptionSerializer,
     PlanSerializer
 )
 
@@ -408,3 +409,39 @@ class StripeWebhookAPIView(APIView):
             checkout_record.status = CheckoutSessionRecord.PaymentStatus.CANCELED
 
             checkout_record.save()
+
+class MySubscriptionAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        checkout_record = (
+            CheckoutSessionRecord.objects
+            .select_related('plan')
+            .filter(user=request.user)
+            .first()
+        )
+
+        if not checkout_record:
+
+            return Response(
+                {
+                    'plan': None,
+                    'status': 'pending',
+                    'has_access': False,
+                    'is_completed': False,
+                    'plan_start_date': None,
+                    'plan_end_date': None,
+                    'amount_total': None,
+                    'currency': None,
+                },
+                status=status.HTTP_200_OK
+            )
+
+        serializer = UserSubscriptionSerializer(checkout_record)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
